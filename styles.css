@@ -1,0 +1,95 @@
+:root {
+  color-scheme: light;
+  font-family: Georgia, "Times New Roman", serif;
+  background: #302416;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  color: #3f2714;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 227, 150, 0.24), transparent 24%),
+    radial-gradient(circle at 78% 72%, rgba(98, 55, 22, 0.34), transparent 28%),
+    linear-gradient(135deg, #24180f, #5a3a1f 52%, #21160f);
+}
+
+.scroll {
+  position: relative;
+  width: min(760px, 100%);
+  min-height: 430px;
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  padding: clamp(48px, 8vw, 96px);
+  text-align: center;
+  border: 1px solid rgba(91, 50, 20, 0.42);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 17% 24%, rgba(97, 54, 21, 0.22) 0 2px, transparent 3px),
+    radial-gradient(circle at 82% 34%, rgba(114, 64, 29, 0.18) 0 3px, transparent 4px),
+    radial-gradient(circle at 56% 78%, rgba(67, 37, 18, 0.15) 0 2px, transparent 3px),
+    linear-gradient(90deg, rgba(89, 48, 19, 0.18), transparent 12%, transparent 88%, rgba(89, 48, 19, 0.18)),
+    linear-gradient(#e0bf78, #f0d79c 38%, #d4aa61);
+  box-shadow:
+    0 28px 60px rgba(0, 0, 0, 0.46),
+    inset 0 0 44px rgba(91, 50, 20, 0.42),
+    inset 0 0 110px rgba(87, 48, 20, 0.22);
+  overflow: hidden;
+}
+
+.scroll::before,
+.scroll::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(77, 42, 18, 0.16);
+  filter: blur(8px);
+}
+
+.scroll::before {
+  top: 14px;
+}
+
+.scroll::after {
+  bottom: 14px;
+}
+
+h1 {
+  position: relative;
+  margin: 0;
+  font-size: clamp(3rem, 12vw, 6.75rem);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 0.95;
+  text-shadow: 0 2px 0 rgba(255, 240, 197, 0.58), 0 8px 24px rgba(73, 40, 17, 0.18);
+}
+
+p {
+  position: relative;
+  max-width: 36rem;
+  margin: 0 auto;
+  font-size: clamp(1rem, 3vw, 1.35rem);
+  line-height: 1.6;
+}
+
+@media (max-width: 520px) {
+  body {
+    padding: 18px;
+  }
+
+  .scroll {
+    min-height: 68vh;
+    padding: 44px 28px;
+  }
+}

@@ -2,19 +2,27 @@
   color-scheme: light;
   font-family: Georgia, "Times New Roman", serif;
   background: #302416;
+  color: #3f2714;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
-  min-height: 100vh;
+  min-height: 100%;
+}
+
+body {
   margin: 0;
+}
+
+.page-shell {
+  min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 32px;
-  color: #3f2714;
   background:
     radial-gradient(circle at 20% 18%, rgba(255, 227, 150, 0.24), transparent 24%),
     radial-gradient(circle at 78% 72%, rgba(98, 55, 22, 0.34), transparent 28%),
@@ -24,7 +32,7 @@ body {
 .scroll {
   position: relative;
   width: min(760px, 100%);
-  min-height: 430px;
+  min-height: 470px;
   display: grid;
   align-content: center;
   gap: 18px;
@@ -65,8 +73,22 @@ body {
   bottom: 14px;
 }
 
-h1 {
+.eyebrow,
+h1,
+.intro,
+.db-status {
   position: relative;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1 {
   margin: 0;
   font-size: clamp(3rem, 12vw, 6.75rem);
   font-weight: 700;
@@ -75,16 +97,53 @@ h1 {
   text-shadow: 0 2px 0 rgba(255, 240, 197, 0.58), 0 8px 24px rgba(73, 40, 17, 0.18);
 }
 
-p {
-  position: relative;
+.intro {
   max-width: 36rem;
   margin: 0 auto;
   font-size: clamp(1rem, 3vw, 1.35rem);
   line-height: 1.6;
 }
 
+.db-status {
+  width: min(430px, 100%);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 24px auto 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(75, 43, 18, 0.28);
+  border-radius: 8px;
+  text-align: left;
+  background: rgba(255, 239, 196, 0.34);
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: #8a4d1f;
+  box-shadow: 0 0 0 4px rgba(138, 77, 31, 0.13);
+}
+
+.db-status.is-ready .status-dot {
+  background: #257047;
+  box-shadow: 0 0 0 4px rgba(37, 112, 71, 0.14);
+}
+
+.db-status strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.db-status p {
+  margin: 0;
+  line-height: 1.45;
+}
+
 @media (max-width: 520px) {
-  body {
+  .page-shell {
     padding: 18px;
   }
 

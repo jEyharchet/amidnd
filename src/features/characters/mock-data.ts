@@ -257,3 +257,7 @@ export const mockCharacters: Character[] = [
     updatedAt: "2026-05-19T00:00:00.000Z",
   },
 ];
+
+export function getMockCharacterById(characterId: string) {
+  return mockCharacters.find((character) => character.id === characterId);
+}

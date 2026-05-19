@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CharacterStatusBadge } from "@/features/characters/components/CharacterStatusBadge";
 import type { Character } from "@/features/characters/types";
 
@@ -7,7 +8,11 @@ type CharacterCardProps = {
 
 export function CharacterCard({ character }: CharacterCardProps) {
   return (
-    <article className="character-card">
+    <Link
+      href={`/characters/${character.id}`}
+      className="character-card"
+      aria-label={`Ver ficha de ${character.name}`}
+    >
       <div className="character-card__header">
         <div>
           <p className="character-card__player">{character.playerName}</p>
@@ -41,7 +46,7 @@ export function CharacterCard({ character }: CharacterCardProps) {
         <span>{character.rulesetId ?? "Ruleset libre"}</span>
         <span>{character.spellcasting ? "Con magia" : "Sin magia"}</span>
       </div>
-    </article>
+    </Link>
   );
 }
 

@@ -29,8 +29,9 @@ export async function listCharactersFromDb() {
     });
 
     return records.map(mapDbCharacterToDomainCharacter);
-  } catch {
-    return [];
+  } catch (error) {
+    logServerError("characters.list", error);
+    return null;
   }
 }
 
@@ -41,7 +42,8 @@ export async function getCharacterRecordById(characterId: string) {
         id: characterId,
       },
     });
-  } catch {
+  } catch (error) {
+    logServerError("characters.getRecord", error, { characterId });
     return null;
   }
 }
@@ -142,6 +144,7 @@ export async function syncCharacterFromSource(characterId: string) {
         "Sincronizacion mock completada con datos de preview.",
     };
   } catch (error) {
+    logServerError("characters.sync", error, { characterId });
     const message =
       error instanceof Error ? error.message : "Ocurrio un error durante la sincronizacion.";
 
@@ -377,4 +380,20 @@ function emptyToNull(value?: string | null) {
 
   const trimmedValue = value.trim();
   return trimmedValue.length ? trimmedValue : null;
+}
+
+function logServerError(
+  scope: string,
+  error: unknown,
+  metadata?: Record<string, string>,
+) {
+  const err = error instanceof Error ? error : new Error("Unknown error");
+
+  console.error(`[${scope}]`, {
+    name: err.name,
+    message: err.message,
+    stack: err.stack,
+    databaseUrlExists: Boolean(process.env.DATABASE_URL),
+    ...metadata,
+  });
 }

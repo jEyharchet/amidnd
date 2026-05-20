@@ -887,6 +887,11 @@ h1 {
   line-height: 1.6;
 }
 
+.characters-empty-state--warning {
+  border-color: rgba(145, 54, 39, 0.22);
+  background: rgba(255, 241, 228, 0.44);
+}
+
 .sheet-top-content {
   margin-top: 22px;
 }

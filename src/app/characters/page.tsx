@@ -10,6 +10,8 @@ export const dynamic = "force-dynamic";
 
 export default async function CharactersPage() {
   const characters = await listCharactersFromDb();
+  const isDatabaseUnavailable = characters === null;
+  const visibleCharacters = characters ?? [];
 
   return (
     <main className="characters-page">
@@ -32,7 +34,7 @@ export default async function CharactersPage() {
         <div className="characters-toolbar">
           <div>
             <span className="characters-toolbar__label">Activos</span>
-            <strong>{characters.length} personajes</strong>
+            <strong>{visibleCharacters.length} personajes</strong>
           </div>
           <div className="characters-toolbar__actions">
             <p className="characters-toolbar__hint">
@@ -44,8 +46,17 @@ export default async function CharactersPage() {
           </div>
         </div>
 
-        {characters.length ? (
-          <CharacterList characters={characters} />
+        {isDatabaseUnavailable ? (
+          <section className="characters-empty-state characters-empty-state--warning">
+            <p className="characters-kicker">Persistencia no disponible</p>
+            <h2>La base no respondio correctamente</h2>
+            <p>
+              La interfaz sigue funcionando, pero la base de datos no esta lista para
+              guardar o listar personajes reales.
+            </p>
+          </section>
+        ) : visibleCharacters.length ? (
+          <CharacterList characters={visibleCharacters} />
         ) : (
           <section className="characters-empty-state">
             <p className="characters-kicker">Sin fichas guardadas</p>

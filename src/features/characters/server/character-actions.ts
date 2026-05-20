@@ -60,7 +60,17 @@ export async function createCharacterAction(
       source: source as "LOCAL" | "NIVEL20",
       sourceUrl: source === "NIVEL20" ? sourceUrl : undefined,
     });
-  } catch {
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error("Unknown error");
+
+    console.error("[characters.create]", {
+      name: err.name,
+      message: err.message,
+      stack: err.stack,
+      databaseUrlExists: Boolean(process.env.DATABASE_URL),
+      source,
+    });
+
     return {
       error:
         "No pude guardar el personaje en la base todavia. Revisa DATABASE_URL y la migracion de Prisma.",

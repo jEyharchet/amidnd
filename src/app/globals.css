@@ -283,6 +283,12 @@ h1 {
   display: block;
 }
 
+.characters-toolbar__actions {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
 .characters-toolbar__label {
   display: block;
   margin-bottom: 4px;
@@ -298,6 +304,20 @@ h1 {
   margin: 0;
   line-height: 1.5;
   text-align: right;
+}
+
+.characters-toolbar__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid rgba(103, 62, 27, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 248, 223, 0.58);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .character-list {
@@ -456,6 +476,76 @@ h1 {
 .character-sheet-shell--missing {
   max-width: 760px;
   text-align: center;
+}
+
+.importer-panel {
+  display: grid;
+  gap: 20px;
+  padding: 22px;
+  border: 1px solid rgba(104, 63, 27, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 248, 226, 0.48);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.importer-panel__heading {
+  display: grid;
+  gap: 8px;
+}
+
+.importer-panel__heading h2,
+.importer-panel__heading p,
+.importer-result p {
+  margin: 0;
+}
+
+.importer-form {
+  display: grid;
+  gap: 12px;
+}
+
+.importer-form__label {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #71451f;
+}
+
+.importer-form__input {
+  width: 100%;
+  min-height: 54px;
+  padding: 14px 16px;
+  border: 1px solid rgba(103, 62, 27, 0.28);
+  border-radius: 10px;
+  background: rgba(255, 252, 240, 0.86);
+  color: #3f2714;
+  font: inherit;
+}
+
+.importer-form__button {
+  border: 0;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.importer-result {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid rgba(103, 62, 27, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 250, 233, 0.54);
+}
+
+.importer-result--valid-url {
+  border-color: rgba(37, 112, 71, 0.28);
+}
+
+.importer-result--invalid-url {
+  border-color: rgba(145, 54, 39, 0.28);
+}
+
+.importer-result__status {
+  font-weight: 700;
 }
 
 .sheet-back-link {
@@ -682,6 +772,10 @@ h1 {
 
   .characters-toolbar__hint {
     text-align: left;
+  }
+
+  .characters-toolbar__actions {
+    justify-items: start;
   }
 
   .combat-grid {

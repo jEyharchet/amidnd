@@ -29,9 +29,14 @@ export default function CharactersPage() {
             <span className="characters-toolbar__label">Activos</span>
             <strong>{mockCharacters.length} personajes</strong>
           </div>
-          <p className="characters-toolbar__hint">
-            Mock inicial para destrabar CRUD, importadores y reglas por steps.
-          </p>
+          <div className="characters-toolbar__actions">
+            <p className="characters-toolbar__hint">
+              Mock inicial para destrabar CRUD, importadores y reglas por steps.
+            </p>
+            <a href="/characters/import/nivel20" className="characters-toolbar__link">
+              Importar desde Nivel20
+            </a>
+          </div>
         </div>
 
         <CharacterList characters={mockCharacters} />

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CharacterList, mockCharacters } from "@/features/characters";
 
 export const metadata = {
@@ -33,9 +34,9 @@ export default function CharactersPage() {
             <p className="characters-toolbar__hint">
               Mock inicial para destrabar CRUD, importadores y reglas por steps.
             </p>
-            <a href="/characters/import/nivel20" className="characters-toolbar__link">
+            <Link href="/characters/import/nivel20" className="characters-toolbar__link">
               Importar desde Nivel20
-            </a>
+            </Link>
           </div>
         </div>
 

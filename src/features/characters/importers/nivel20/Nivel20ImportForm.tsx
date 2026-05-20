@@ -13,7 +13,7 @@ export function Nivel20ImportForm() {
       <div className="importer-panel__heading">
         <h2>Probar URL compartida</h2>
         <p>
-          No ingreses tu contraseña. Esta prueba solo usa URLs de personaje
+          No ingreses tu contrasena. Esta prueba solo usa URLs de personaje
           compartidas o publicas.
         </p>
       </div>
@@ -49,16 +49,65 @@ export function Nivel20ImportForm() {
           aria-live="polite"
         >
           <p className="importer-result__status">
-            {result.status === "valid-url"
+            {result.status === "success"
               ? "URL valida"
-              : result.status === "unsupported-url"
-                ? "URL no soportada todavia"
+              : result.status === "partial"
+                ? "URL soportada parcialmente"
                 : "URL invalida"}
           </p>
-          <p>{result.message}</p>
-          {result.detectedDomain ? <p>Dominio detectado: {result.detectedDomain}</p> : null}
-          {result.normalizedUrl ? <p>URL valida: {result.normalizedUrl}</p> : null}
-          {result.nextStep ? <p>{result.nextStep}</p> : null}
+          <p>Fuente analizada: {result.sourceUrl || "Sin URL valida"}</p>
+          {result.detectedCharacterName ? (
+            <p>Nombre detectado: {result.detectedCharacterName}</p>
+          ) : null}
+          {result.issues.map((issue) => (
+            <p key={`${issue.code}-${issue.message}`}>{issue.message}</p>
+          ))}
+        </section>
+      ) : null}
+
+      {result?.parsedCharacter && result.importedDraft ? (
+        <section className="importer-preview">
+          <div className="importer-preview__heading">
+            <h3>Preview mock de ImportedCharacterDraft</h3>
+            <p>
+              Nombre: {result.importedDraft.identity.name} ·{" "}
+              {result.importedDraft.identity.species} · Nivel{" "}
+              {result.importedDraft.totalLevel}
+            </p>
+          </div>
+
+          <div className="importer-preview__summary">
+            <article>
+              <span>Clase</span>
+              <strong>
+                {result.importedDraft.classes
+                  .map((entry) =>
+                    entry.subclass ? `${entry.name} (${entry.subclass})` : entry.name,
+                  )
+                  .join(", ")}
+              </strong>
+            </article>
+            <article>
+              <span>Conjuros</span>
+              <strong>
+                {result.importedDraft.spellcasting[0]?.source ?? "Sin lanzamiento"}
+              </strong>
+            </article>
+            <article>
+              <span>Raw import data</span>
+              <strong>{result.importedDraft.rawImportData?.format ?? "unknown"}</strong>
+            </article>
+          </div>
+
+          <div className="importer-preview__sections">
+            {result.parsedCharacter.sections.map((section) => (
+              <article key={section.key} className="importer-preview__section">
+                <span>{section.label}</span>
+                <strong>{section.itemCount}</strong>
+                <p>{section.notes ?? `Estado: ${section.status}`}</p>
+              </article>
+            ))}
+          </div>
         </section>
       ) : null}
     </div>

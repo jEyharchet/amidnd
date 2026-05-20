@@ -10,6 +10,8 @@ export { CharacterSkillsPanel } from "@/features/characters/components/Character
 export { CharacterResourcesPanel } from "@/features/characters/components/CharacterResourcesPanel";
 export { CharacterNotesPanel } from "@/features/characters/components/CharacterNotesPanel";
 export { CharacterStatusBadge } from "@/features/characters/components/CharacterStatusBadge";
+export { CharacterCreateForm } from "@/features/characters/components/CharacterCreateForm";
+export { CharacterSyncClient } from "@/features/characters/components/CharacterSyncClient";
 export type {
   Character,
   CharacterAbilityScores,

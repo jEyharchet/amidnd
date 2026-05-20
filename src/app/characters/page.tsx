@@ -1,11 +1,16 @@
 import Link from "next/link";
-import { CharacterList, mockCharacters } from "@/features/characters";
+import { CharacterList } from "@/features/characters";
+import { listCharactersFromDb } from "@/features/characters/server/character-store";
 
 export const metadata = {
   title: "Personajes | Amidnd",
 };
 
-export default function CharactersPage() {
+export const dynamic = "force-dynamic";
+
+export default async function CharactersPage() {
+  const characters = await listCharactersFromDb();
+
   return (
     <main className="characters-page">
       <section className="characters-shell" aria-label="Registro de personajes">
@@ -14,25 +19,24 @@ export default function CharactersPage() {
             <p className="characters-kicker">Amidnd · Personajes</p>
             <h1>Cripta de aventureros</h1>
             <p className="characters-copy">
-              Primer modulo del dominio de personajes. La estructura queda lista para
-              carga manual, reglas futuras e importadores sin acoplar la UI a una
-              base de datos todavia.
+              Personajes persistidos en Neon, con origen local o enlace a Nivel20
+              para sincronizacion posterior.
             </p>
           </div>
 
-          <button type="button" className="characters-action" disabled>
+          <Link href="/characters/new" className="primary-link">
             Nuevo personaje
-          </button>
+          </Link>
         </div>
 
         <div className="characters-toolbar">
           <div>
             <span className="characters-toolbar__label">Activos</span>
-            <strong>{mockCharacters.length} personajes</strong>
+            <strong>{characters.length} personajes</strong>
           </div>
           <div className="characters-toolbar__actions">
             <p className="characters-toolbar__hint">
-              Mock inicial para destrabar CRUD, importadores y reglas por steps.
+              Los personajes Nivel20 guardan su URL y se sincronizan desde la ficha.
             </p>
             <Link href="/characters/import/nivel20" className="characters-toolbar__link">
               Importar desde Nivel20
@@ -40,7 +44,23 @@ export default function CharactersPage() {
           </div>
         </div>
 
-        <CharacterList characters={mockCharacters} />
+        {characters.length ? (
+          <CharacterList characters={characters} />
+        ) : (
+          <section className="characters-empty-state">
+            <p className="characters-kicker">Sin fichas guardadas</p>
+            <h2>La cripta todavia esta vacia</h2>
+            <p>
+              Crea tu primer personaje local o enlaza una ficha de Nivel20 para empezar
+              a poblar el archivo.
+            </p>
+            <div className="home-actions">
+              <Link href="/characters/new" className="primary-link">
+                Crear el primer personaje
+              </Link>
+            </div>
+          </section>
+        )}
       </section>
     </main>
   );

@@ -15,7 +15,9 @@ export function CharacterCard({ character }: CharacterCardProps) {
     >
       <div className="character-card__header">
         <div>
-          <p className="character-card__player">{character.playerName}</p>
+          {character.playerName ? (
+            <p className="character-card__player">{character.playerName}</p>
+          ) : null}
           <h2 className="character-card__name">{character.name}</h2>
         </div>
         <CharacterStatusBadge sourceMetadata={character.sourceMetadata} />

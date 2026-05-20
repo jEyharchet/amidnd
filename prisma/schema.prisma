@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CharacterSource {
+  LOCAL
+  NIVEL20
+}
+
+enum CharacterSyncStatus {
+  NEVER_SYNCED
+  SYNCING
+  SYNCED
+  ERROR
+}
+
+model Character {
+  id               String              @id @default(cuid())
+  name             String
+  playerName       String?
+  source           CharacterSource
+  sourceUrl        String?
+  sourceExternalId String?
+  sourceLabel      String?
+  syncStatus       CharacterSyncStatus @default(NEVER_SYNCED)
+  lastSyncedAt     DateTime?
+  syncError        String?
+  importedData     Json?
+  rawImportData    Json?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+}

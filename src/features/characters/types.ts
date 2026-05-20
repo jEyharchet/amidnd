@@ -310,7 +310,7 @@ export type ImportedCharacterDraft = {
 export type Character = {
   id: string;
   name: string;
-  playerName: string;
+  playerName?: string;
   species: string;
   classLabel: string;
   level: number;

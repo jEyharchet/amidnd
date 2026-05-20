@@ -9,7 +9,9 @@ export function CharacterHeader({ character }: CharacterHeaderProps) {
   return (
     <header className="sheet-header">
       <div>
-        <p className="sheet-header__player">Jugador: {character.playerName}</p>
+        {character.playerName ? (
+          <p className="sheet-header__player">Jugador: {character.playerName}</p>
+        ) : null}
         <h1 className="sheet-header__name">{character.name}</h1>
         <p className="sheet-header__summary">
           {character.species} · {character.classLabel} · Nivel {character.level}

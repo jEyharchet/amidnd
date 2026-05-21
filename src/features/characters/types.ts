@@ -41,6 +41,11 @@ export type CharacterAbilityScore = {
   label: string;
   score: number;
   modifier?: number;
+  savingThrowModifier?: number;
+  savingThrowProficient?: boolean;
+  temporaryScore?: number;
+  overrideModifier?: number;
+  source?: string;
 };
 
 export type CharacterAbilityScores = Record<AbilityScoreKey, CharacterAbilityScore>;
@@ -48,9 +53,13 @@ export type CharacterAbilityScores = Record<AbilityScoreKey, CharacterAbilitySco
 export type CharacterSkill = {
   key: CharacterSkillKey;
   label: string;
-  ability: AbilityScoreKey;
+  linkedAbility: AbilityScoreKey;
   modifier?: number;
-  proficiency: ProficiencyLevel;
+  proficient: boolean;
+  expertise?: boolean;
+  halfProficient?: boolean;
+  passive?: number;
+  source?: string;
   notes?: string;
 };
 
@@ -58,6 +67,7 @@ export type CharacterSavingThrow = {
   ability: AbilityScoreKey;
   modifier?: number;
   proficient: boolean;
+  source?: string;
   notes?: string;
 };
 
@@ -160,6 +170,7 @@ export type CharacterCustomAttributeValue = {
 export type Nivel20MappingRule = {
   id: string;
   candidateId: string;
+  matcherKey?: string;
   sourcePath: string;
   originalText: string;
   detectedValue: string;
@@ -168,6 +179,7 @@ export type Nivel20MappingRule = {
   action: "map-existing" | "ignore" | "map-custom";
   targetField?: string;
   customAttributeKey?: string;
+  selectionSource?: "automatic" | "manual";
 };
 
 export type Nivel20MappingProfile = {

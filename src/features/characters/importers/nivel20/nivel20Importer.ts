@@ -117,26 +117,26 @@ const abilityLabelMap: Record<string, AbilityScoreKey> = {
 const skillDefinitions: Array<{
   key: CharacterSkill["key"];
   label: string;
-  ability: AbilityScoreKey;
+  linkedAbility: AbilityScoreKey;
 }> = [
-  { key: "acrobatics", label: "Acrobacias", ability: "dexterity" },
-  { key: "animalHandling", label: "Trato con animales", ability: "wisdom" },
-  { key: "arcana", label: "Arcana", ability: "intelligence" },
-  { key: "athletics", label: "Atletismo", ability: "strength" },
-  { key: "deception", label: "Engano", ability: "charisma" },
-  { key: "history", label: "Historia", ability: "intelligence" },
-  { key: "insight", label: "Perspicacia", ability: "wisdom" },
-  { key: "intimidation", label: "Intimidacion", ability: "charisma" },
-  { key: "investigation", label: "Investigacion", ability: "intelligence" },
-  { key: "medicine", label: "Medicina", ability: "wisdom" },
-  { key: "nature", label: "Naturaleza", ability: "intelligence" },
-  { key: "perception", label: "Percepcion", ability: "wisdom" },
-  { key: "performance", label: "Interpretacion", ability: "charisma" },
-  { key: "persuasion", label: "Persuasion", ability: "charisma" },
-  { key: "religion", label: "Religion", ability: "intelligence" },
-  { key: "sleightOfHand", label: "Juego de manos", ability: "dexterity" },
-  { key: "stealth", label: "Sigilo", ability: "dexterity" },
-  { key: "survival", label: "Supervivencia", ability: "wisdom" },
+  { key: "acrobatics", label: "Acrobacias", linkedAbility: "dexterity" },
+  { key: "animalHandling", label: "Trato con animales", linkedAbility: "wisdom" },
+  { key: "arcana", label: "Arcana", linkedAbility: "intelligence" },
+  { key: "athletics", label: "Atletismo", linkedAbility: "strength" },
+  { key: "deception", label: "Engano", linkedAbility: "charisma" },
+  { key: "history", label: "Historia", linkedAbility: "intelligence" },
+  { key: "insight", label: "Perspicacia", linkedAbility: "wisdom" },
+  { key: "intimidation", label: "Intimidacion", linkedAbility: "charisma" },
+  { key: "investigation", label: "Investigacion", linkedAbility: "intelligence" },
+  { key: "medicine", label: "Medicina", linkedAbility: "wisdom" },
+  { key: "nature", label: "Naturaleza", linkedAbility: "intelligence" },
+  { key: "perception", label: "Percepcion", linkedAbility: "wisdom" },
+  { key: "performance", label: "Interpretacion", linkedAbility: "charisma" },
+  { key: "persuasion", label: "Persuasion", linkedAbility: "charisma" },
+  { key: "religion", label: "Religion", linkedAbility: "intelligence" },
+  { key: "sleightOfHand", label: "Juego de manos", linkedAbility: "dexterity" },
+  { key: "stealth", label: "Sigilo", linkedAbility: "dexterity" },
+  { key: "survival", label: "Supervivencia", linkedAbility: "wisdom" },
 ];
 
 const sectionDefinitions: Array<{
@@ -155,12 +155,12 @@ const sectionDefinitions: Array<{
     key: "ability-scores",
     label: "Caracteristicas",
     expectedFields: [
-      "abilityScores.strength",
-      "abilityScores.dexterity",
-      "abilityScores.constitution",
-      "abilityScores.intelligence",
-      "abilityScores.wisdom",
-      "abilityScores.charisma",
+      "abilityScores.strength.score",
+      "abilityScores.dexterity.score",
+      "abilityScores.constitution.score",
+      "abilityScores.intelligence.score",
+      "abilityScores.wisdom.score",
+      "abilityScores.charisma.score",
     ],
     htmlKeywords: ["fue", "des", "con", "int", "sab", "car"],
   },
@@ -922,6 +922,7 @@ function buildImportedDraft({
     importIssues: [],
   };
 
+  hydrateAbilitySavingThrowMetadata(nextDraft);
   sanitizeImportedDraft(nextDraft, sourceUrl);
 
   const diagnostics = buildDiagnostics(nextDraft, parsed, sectionStates);
@@ -1119,11 +1120,25 @@ function createMockPreviewDraft(sourceUrl: string): ImportedCharacterDraft {
   draft.languages = ["Comun", "Elfico"];
   draft.abilityScores = {
     strength: { key: "strength", label: "FUE", score: 11, modifier: 0 },
-    dexterity: { key: "dexterity", label: "DES", score: 18, modifier: 4 },
+    dexterity: {
+      key: "dexterity",
+      label: "DES",
+      score: 18,
+      modifier: 4,
+      savingThrowModifier: 6,
+      savingThrowProficient: true,
+    },
     constitution: { key: "constitution", label: "CON", score: 14, modifier: 2 },
     intelligence: { key: "intelligence", label: "INT", score: 14, modifier: 2 },
     wisdom: { key: "wisdom", label: "SAB", score: 12, modifier: 1 },
-    charisma: { key: "charisma", label: "CAR", score: 14, modifier: 2 },
+    charisma: {
+      key: "charisma",
+      label: "CAR",
+      score: 14,
+      modifier: 2,
+      savingThrowModifier: 4,
+      savingThrowProficient: true,
+    },
   };
   draft.hitPoints = { current: 10, maximum: 10, hitDice: "1d8" };
   draft.armor = {
@@ -1140,9 +1155,9 @@ function createMockPreviewDraft(sourceUrl: string): ImportedCharacterDraft {
     { ability: "charisma", proficient: true, modifier: 4 },
   ];
   draft.skills = [
-    { key: "acrobatics", label: "Acrobacias", ability: "dexterity", modifier: 6, proficiency: "proficient" },
-    { key: "performance", label: "Interpretacion", ability: "charisma", modifier: 4, proficiency: "proficient" },
-    { key: "persuasion", label: "Persuasion", ability: "charisma", modifier: 4, proficiency: "proficient" },
+    { key: "acrobatics", label: "Acrobacias", linkedAbility: "dexterity", modifier: 6, proficient: true },
+    { key: "performance", label: "Interpretacion", linkedAbility: "charisma", modifier: 4, proficient: true },
+    { key: "persuasion", label: "Persuasion", linkedAbility: "charisma", modifier: 4, proficient: true },
   ];
   draft.attacks = [
     {
@@ -1256,6 +1271,7 @@ function createMockPreviewDraft(sourceUrl: string): ImportedCharacterDraft {
   };
 
   draft.sourceMetadata.syncStatus = "mock";
+  hydrateAbilitySavingThrowMetadata(draft);
   draft.importDiagnostics = diagnostics;
   draft.importIssues = [
     {
@@ -1444,12 +1460,12 @@ export function sanitizeImportedDraft(draft: ImportedCharacterDraft, sourceUrl: 
 
 function createEmptyAbilityScores(): CharacterAbilityScores {
   return {
-    strength: { key: "strength", label: "FUE", score: 0, modifier: 0 },
-    dexterity: { key: "dexterity", label: "DES", score: 0, modifier: 0 },
-    constitution: { key: "constitution", label: "CON", score: 0, modifier: 0 },
-    intelligence: { key: "intelligence", label: "INT", score: 0, modifier: 0 },
-    wisdom: { key: "wisdom", label: "SAB", score: 0, modifier: 0 },
-    charisma: { key: "charisma", label: "CAR", score: 0, modifier: 0 },
+    strength: { key: "strength", label: "FUE", score: 0 },
+    dexterity: { key: "dexterity", label: "DES", score: 0 },
+    constitution: { key: "constitution", label: "CON", score: 0 },
+    intelligence: { key: "intelligence", label: "INT", score: 0 },
+    wisdom: { key: "wisdom", label: "SAB", score: 0 },
+    charisma: { key: "charisma", label: "CAR", score: 0 },
   };
 }
 
@@ -1494,6 +1510,7 @@ function buildTrainerCandidates(
     candidates.push({
       id,
       sectionKey,
+      matcherKey: buildCandidateMatcherKey(sectionKey, selectorHint, suggestedField, detectedValue),
       originalText,
       detectedValue,
       suggestedField,
@@ -1546,19 +1563,57 @@ function buildTrainerCandidates(
   }
 
   for (const [abilityKey, ability] of Object.entries(draft.abilityScores)) {
-    if (!ability.score) {
-      continue;
+    if (ability.score) {
+      pushCandidate({
+        id: `ability-${abilityKey}-score`,
+        sectionKey: "ability-scores",
+        originalText: parsed.sections["ability-scores"] ?? `${ability.label} ${ability.score}`,
+        detectedValue: String(ability.score),
+        suggestedField: `abilityScores.${abilityKey}.score` as Nivel20CandidateField,
+        confidence: "high",
+        selectorHint: `text-match:${ability.label.toLowerCase()}:score`,
+      });
     }
 
-    pushCandidate({
-      id: `ability-${abilityKey}`,
-      sectionKey: "ability-scores",
-      originalText: parsed.sections["ability-scores"] ?? `${ability.label} ${ability.score}`,
-      detectedValue: String(ability.score),
-      suggestedField: `abilityScores.${abilityKey}.score` as Nivel20CandidateField,
-      confidence: "high",
-      selectorHint: `text-match:${ability.label.toLowerCase()}`,
-    });
+    if (ability.modifier !== undefined) {
+      pushCandidate({
+        id: `ability-${abilityKey}-modifier`,
+        sectionKey: "ability-scores",
+        originalText:
+          parsed.sections["ability-scores"] ??
+          `${ability.label} ${formatSignedValue(ability.modifier)}`,
+        detectedValue: formatSignedValue(ability.modifier),
+        suggestedField: `abilityScores.${abilityKey}.modifier` as Nivel20CandidateField,
+        confidence: "high",
+        selectorHint: `text-match:${ability.label.toLowerCase()}:modifier`,
+      });
+    }
+
+    if (ability.savingThrowModifier !== undefined) {
+      pushCandidate({
+        id: `ability-${abilityKey}-save-modifier`,
+        sectionKey: "saving-throws",
+        originalText:
+          parsed.sections["saving-throws"] ??
+          `${ability.label} ${formatSignedValue(ability.savingThrowModifier)}`,
+        detectedValue: formatSignedValue(ability.savingThrowModifier),
+        suggestedField: `abilityScores.${abilityKey}.savingThrowModifier` as Nivel20CandidateField,
+        confidence: "medium",
+        selectorHint: `text-match:${ability.label.toLowerCase()}:save-modifier`,
+      });
+    }
+
+    if (ability.savingThrowProficient !== undefined) {
+      pushCandidate({
+        id: `ability-${abilityKey}-save-proficient`,
+        sectionKey: "saving-throws",
+        originalText: parsed.sections["saving-throws"] ?? `${ability.label} competente`,
+        detectedValue: ability.savingThrowProficient ? "competente" : "no",
+        suggestedField: `abilityScores.${abilityKey}.savingThrowProficient` as Nivel20CandidateField,
+        confidence: "medium",
+        selectorHint: `text-match:${ability.label.toLowerCase()}:save-proficient`,
+      });
+    }
   }
 
   if (draft.hitPoints.maximum) {
@@ -1760,6 +1815,12 @@ function buildArrayCandidates(
     candidates.push({
       id: `${sectionKey}-${slugify(value)}-${index}`,
       sectionKey,
+      matcherKey: buildCandidateMatcherKey(
+        sectionKey,
+        `section:${sectionKey}`,
+        suggestedField,
+        value,
+      ),
       originalText: parsed.sections[sectionKey] ?? value,
       detectedValue: value,
       suggestedField,
@@ -1940,9 +2001,12 @@ function parseAbilityScores(text: string, parsedFields: string[]) {
       key,
       label,
       score: Number(match[1]),
-      modifier: match[2] ? Number(match[2]) : calculateModifier(Number(match[1])),
+      modifier: match[2] ? Number(match[2]) : undefined,
     };
-    parsedFields.push(`abilityScores.${key}`);
+    parsedFields.push(`abilityScores.${key}.score`);
+    if (match[2]) {
+      parsedFields.push(`abilityScores.${key}.modifier`);
+    }
   }
 
   return matchCount ? abilities : undefined;
@@ -2122,9 +2186,10 @@ function parseSkills(text: string, parsedFields: string[]) {
     skills.push({
       key: definition.key,
       label: definition.label,
-      ability: definition.ability,
+      linkedAbility: definition.linkedAbility,
       modifier: Number(match[1]),
-      proficiency: "proficient",
+      proficient: true,
+      source: "Nivel20 HTML",
     });
     parsedFields.push("skills");
   }
@@ -2148,11 +2213,29 @@ function parseSavingThrows(text: string, parsedFields: string[]) {
       ability: key,
       proficient: true,
       modifier: Number(match[1]),
+      source: "Nivel20 HTML",
     });
     parsedFields.push("savingThrows");
+    parsedFields.push(`abilityScores.${key}.savingThrowModifier`);
+    parsedFields.push(`abilityScores.${key}.savingThrowProficient`);
   }
 
   return results;
+}
+
+function hydrateAbilitySavingThrowMetadata(draft: ImportedCharacterDraft) {
+  for (const savingThrow of draft.savingThrows) {
+    const ability = draft.abilityScores[savingThrow.ability];
+
+    if (!ability) {
+      continue;
+    }
+
+    if (savingThrow.modifier !== undefined) {
+      ability.savingThrowModifier = savingThrow.modifier;
+    }
+    ability.savingThrowProficient = savingThrow.proficient;
+  }
 }
 
 function parseAttacks(text: string, parsedFields: string[]) {
@@ -2377,8 +2460,22 @@ function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 }
 
-function calculateModifier(score: number) {
-  return Math.floor((score - 10) / 2);
+function formatSignedValue(value: number) {
+  return value >= 0 ? `+${value}` : `${value}`;
+}
+
+function buildCandidateMatcherKey(
+  sectionKey: string,
+  selectorHint: string | undefined,
+  suggestedField: Nivel20CandidateField | undefined,
+  detectedValue: string,
+) {
+  return [
+    sectionKey,
+    selectorHint ?? "no-selector",
+    suggestedField ?? "no-suggestion",
+    slugify(detectedValue).slice(0, 24),
+  ].join("|");
 }
 
 function slugify(value: string) {

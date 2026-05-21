@@ -59,11 +59,29 @@ export type Nivel20CandidateField =
   | "class"
   | "level"
   | "abilityScores.strength.score"
+  | "abilityScores.strength.modifier"
+  | "abilityScores.strength.savingThrowModifier"
+  | "abilityScores.strength.savingThrowProficient"
   | "abilityScores.dexterity.score"
+  | "abilityScores.dexterity.modifier"
+  | "abilityScores.dexterity.savingThrowModifier"
+  | "abilityScores.dexterity.savingThrowProficient"
   | "abilityScores.constitution.score"
+  | "abilityScores.constitution.modifier"
+  | "abilityScores.constitution.savingThrowModifier"
+  | "abilityScores.constitution.savingThrowProficient"
   | "abilityScores.intelligence.score"
+  | "abilityScores.intelligence.modifier"
+  | "abilityScores.intelligence.savingThrowModifier"
+  | "abilityScores.intelligence.savingThrowProficient"
   | "abilityScores.wisdom.score"
+  | "abilityScores.wisdom.modifier"
+  | "abilityScores.wisdom.savingThrowModifier"
+  | "abilityScores.wisdom.savingThrowProficient"
   | "abilityScores.charisma.score"
+  | "abilityScores.charisma.modifier"
+  | "abilityScores.charisma.savingThrowModifier"
+  | "abilityScores.charisma.savingThrowProficient"
   | "hitPoints.max"
   | "armorClass.value"
   | "initiative.value"
@@ -87,6 +105,7 @@ export type Nivel20CandidateField =
 
 export type Nivel20TrainerCandidate = {
   id: string;
+  matcherKey: string;
   sectionKey: string;
   originalText: string;
   selectorHint?: string;

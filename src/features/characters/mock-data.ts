@@ -11,7 +11,9 @@ function createAbilityScores(
     {
       label: string;
       score: number;
-      modifier: number;
+      modifier?: number;
+      savingThrowModifier?: number;
+      savingThrowProficient?: boolean;
     }
   >,
 ): CharacterAbilityScores {
@@ -28,16 +30,19 @@ function createAbilityScores(
 function createSkill(
   skill: CharacterSkill["key"],
   label: string,
-  ability: CharacterSkill["ability"],
-  proficiency: CharacterSkill["proficiency"],
+  linkedAbility: CharacterSkill["linkedAbility"],
   modifier?: number,
+  options?: Pick<CharacterSkill, "proficient" | "expertise" | "halfProficient" | "passive">,
 ): CharacterSkill {
   return {
     key: skill,
     label,
-    ability,
-    proficiency,
+    linkedAbility,
     modifier,
+    proficient: options?.proficient ?? false,
+    expertise: options?.expertise,
+    halfProficient: options?.halfProficient,
+    passive: options?.passive,
   };
 }
 
@@ -71,14 +76,14 @@ export const mockCharacters: Character[] = [
       strength: { label: "Fue", score: 8, modifier: -1 },
       dexterity: { label: "Des", score: 14, modifier: 2 },
       constitution: { label: "Con", score: 13, modifier: 1 },
-      intelligence: { label: "Int", score: 18, modifier: 4 },
-      wisdom: { label: "Sab", score: 12, modifier: 1 },
+      intelligence: { label: "Int", score: 18, modifier: 4, savingThrowModifier: 7, savingThrowProficient: true },
+      wisdom: { label: "Sab", score: 12, modifier: 1, savingThrowModifier: 4, savingThrowProficient: true },
       charisma: { label: "Car", score: 10, modifier: 0 },
     }),
     skills: [
-      createSkill("arcana", "Arcanos", "intelligence", "expertise", 7),
-      createSkill("history", "Historia", "intelligence", "proficient", 7),
-      createSkill("investigation", "Investigacion", "intelligence", "proficient", 7),
+      createSkill("arcana", "Arcanos", "intelligence", 7, { proficient: true, expertise: true }),
+      createSkill("history", "Historia", "intelligence", 7, { proficient: true }),
+      createSkill("investigation", "Investigacion", "intelligence", 7, { proficient: true }),
     ],
     savingThrows: [
       createSavingThrow("intelligence", true, 7),
@@ -139,14 +144,14 @@ export const mockCharacters: Character[] = [
       strength: { label: "Fue", score: 10, modifier: 0 },
       dexterity: { label: "Des", score: 18, modifier: 4 },
       constitution: { label: "Con", score: 12, modifier: 1 },
-      intelligence: { label: "Int", score: 13, modifier: 1 },
+      intelligence: { label: "Int", score: 13, modifier: 1, savingThrowModifier: 3, savingThrowProficient: true },
       wisdom: { label: "Sab", score: 14, modifier: 2 },
       charisma: { label: "Car", score: 11, modifier: 0 },
     }),
     skills: [
-      createSkill("stealth", "Sigilo", "dexterity", "expertise", 8),
-      createSkill("sleightOfHand", "Juego de manos", "dexterity", "proficient", 6),
-      createSkill("perception", "Percepcion", "wisdom", "proficient", 4),
+      createSkill("stealth", "Sigilo", "dexterity", 8, { proficient: true, expertise: true }),
+      createSkill("sleightOfHand", "Juego de manos", "dexterity", 6, { proficient: true }),
+      createSkill("perception", "Percepcion", "wisdom", 4, { proficient: true, passive: 14 }),
     ],
     savingThrows: [
       createSavingThrow("dexterity", true, 6),
@@ -201,13 +206,13 @@ export const mockCharacters: Character[] = [
       dexterity: { label: "Des", score: 10, modifier: 0 },
       constitution: { label: "Con", score: 16, modifier: 3 },
       intelligence: { label: "Int", score: 10, modifier: 0 },
-      wisdom: { label: "Sab", score: 17, modifier: 3 },
-      charisma: { label: "Car", score: 12, modifier: 1 },
+      wisdom: { label: "Sab", score: 17, modifier: 3, savingThrowModifier: 6, savingThrowProficient: true },
+      charisma: { label: "Car", score: 12, modifier: 1, savingThrowModifier: 4, savingThrowProficient: true },
     }),
     skills: [
-      createSkill("medicine", "Medicina", "wisdom", "proficient", 6),
-      createSkill("religion", "Religion", "intelligence", "proficient", 3),
-      createSkill("insight", "Perspicacia", "wisdom", "proficient", 6),
+      createSkill("medicine", "Medicina", "wisdom", 6, { proficient: true }),
+      createSkill("religion", "Religion", "intelligence", 3, { proficient: true }),
+      createSkill("insight", "Perspicacia", "wisdom", 6, { proficient: true, passive: 16 }),
     ],
     savingThrows: [
       createSavingThrow("wisdom", true, 6),

@@ -295,12 +295,12 @@ export function mapPrismaSyncStatusToDomain(
 
 function createLocalDraftFromRecord(record: DbCharacter): ImportedCharacterDraft {
   const abilityScores: CharacterAbilityScores = {
-    strength: { key: "strength", label: "FUE", score: 10, modifier: 0 },
-    dexterity: { key: "dexterity", label: "DES", score: 10, modifier: 0 },
-    constitution: { key: "constitution", label: "CON", score: 10, modifier: 0 },
-    intelligence: { key: "intelligence", label: "INT", score: 10, modifier: 0 },
-    wisdom: { key: "wisdom", label: "SAB", score: 10, modifier: 0 },
-    charisma: { key: "charisma", label: "CAR", score: 10, modifier: 0 },
+    strength: { key: "strength", label: "FUE", score: 10 },
+    dexterity: { key: "dexterity", label: "DES", score: 10 },
+    constitution: { key: "constitution", label: "CON", score: 10 },
+    intelligence: { key: "intelligence", label: "INT", score: 10 },
+    wisdom: { key: "wisdom", label: "SAB", score: 10 },
+    charisma: { key: "charisma", label: "CAR", score: 10 },
   };
 
   return {
@@ -379,34 +379,43 @@ function normalizeImportedDraft(
   draft: ImportedCharacterDraft,
   record: DbCharacter,
 ): ImportedCharacterDraft {
-  if (draft.importDiagnostics) {
-    return draft;
+  const normalizedDraft = applyLegacyCompatibility(draft, record);
+
+  if (normalizedDraft.importDiagnostics) {
+    return normalizedDraft;
   }
 
-  const rawSnapshot = (record.rawImportData as ImportedCharacterDraft["rawImportData"]) ?? draft.rawImportData;
+  const rawSnapshot =
+    (record.rawImportData as ImportedCharacterDraft["rawImportData"]) ??
+    normalizedDraft.rawImportData;
   const isMockSnapshot = rawSnapshot?.metadata?.mocked === "true" || rawSnapshot?.metadata?.importState === "mock";
   const source = mapPrismaSourceToDomain(record.source);
 
   const inferredDiagnostics: CharacterImportDiagnostics = {
     state: isMockSnapshot ? "mock" : record.source === DbCharacterSource.NIVEL20 ? "partial" : "real",
     source,
-    sectionsDetected: countDetectedSections(draft),
-    importedFieldCount: countImportedFields(draft),
-    detectedSections: inferDetectedSections(draft),
-    importedFields: inferImportedFieldNames(draft),
+    sectionsDetected: countDetectedSections(normalizedDraft),
+    importedFieldCount: countImportedFields(normalizedDraft),
+    detectedSections: inferDetectedSections(normalizedDraft),
+    importedFields: inferImportedFieldNames(normalizedDraft),
     missingFields: rawSnapshot?.missingFields ?? [],
-    sectionDiagnostics: buildSectionDiagnosticsFromDraft(draft, isMockSnapshot),
+    sectionDiagnostics: buildSectionDiagnosticsFromDraft(normalizedDraft, isMockSnapshot),
     notes: isMockSnapshot
       ? ["Esta ficha proviene de una importacion mock o fallback previa."]
       : undefined,
   };
 
   return {
-    ...draft,
-    customAttributes: draft.customAttributes ?? [],
+    ...normalizedDraft,
+    customAttributes: normalizedDraft.customAttributes ?? [],
     sourceMetadata: {
-      ...draft.sourceMetadata,
-      syncStatus: inferredDiagnostics.state === "mock" ? "mock" : inferredDiagnostics.state === "partial" ? "partial" : draft.sourceMetadata.syncStatus,
+      ...normalizedDraft.sourceMetadata,
+      syncStatus:
+        inferredDiagnostics.state === "mock"
+          ? "mock"
+          : inferredDiagnostics.state === "partial"
+            ? "partial"
+            : normalizedDraft.sourceMetadata.syncStatus,
     },
     importDiagnostics: inferredDiagnostics,
   };
@@ -495,7 +504,16 @@ function inferImportedFieldNames(draft: ImportedCharacterDraft) {
 
   for (const [abilityKey, ability] of Object.entries(draft.abilityScores)) {
     if (ability.score > 0) {
-      fields.push(`abilityScores.${abilityKey}`);
+      fields.push(`abilityScores.${abilityKey}.score`);
+    }
+    if (ability.modifier !== undefined) {
+      fields.push(`abilityScores.${abilityKey}.modifier`);
+    }
+    if (ability.savingThrowModifier !== undefined) {
+      fields.push(`abilityScores.${abilityKey}.savingThrowModifier`);
+    }
+    if (ability.savingThrowProficient !== undefined) {
+      fields.push(`abilityScores.${abilityKey}.savingThrowProficient`);
     }
   }
 
@@ -574,4 +592,108 @@ function logServerError(
     databaseUrlExists: Boolean(process.env.DATABASE_URL),
     ...metadata,
   });
+}
+
+function applyLegacyCompatibility(
+  draft: ImportedCharacterDraft,
+  record: DbCharacter,
+): ImportedCharacterDraft {
+  const normalizedAbilityScores = normalizeAbilityScores(draft.abilityScores, draft.savingThrows);
+  const normalizedSavingThrows = normalizeSavingThrows(draft.savingThrows, normalizedAbilityScores);
+  const normalizedSkills = draft.skills.map((skill) => {
+    const legacySkill = skill as typeof skill & {
+      ability?: keyof ImportedCharacterDraft["abilityScores"];
+      proficiency?: "none" | "half" | "proficient" | "expertise";
+    };
+
+    return {
+      ...skill,
+      linkedAbility: skill.linkedAbility ?? legacySkill.ability ?? "strength",
+      proficient:
+        skill.proficient ??
+        (legacySkill.proficiency === "proficient" ||
+          legacySkill.proficiency === "expertise"),
+      expertise: skill.expertise ?? (legacySkill.proficiency === "expertise"),
+      halfProficient: skill.halfProficient ?? (legacySkill.proficiency === "half"),
+    };
+  });
+
+  return {
+    ...draft,
+    sourceMetadata: {
+      source: mapPrismaSourceToDomain(record.source),
+      sourceLabel:
+        draft.sourceMetadata?.sourceLabel ??
+        (record.source === DbCharacterSource.NIVEL20 ? "Nivel20" : "Local"),
+      sourceUrl: record.sourceUrl ?? draft.sourceMetadata?.sourceUrl,
+      externalId: record.sourceExternalId ?? draft.sourceMetadata?.externalId,
+      syncStatus: draft.sourceMetadata?.syncStatus ?? mapPrismaSyncStatusToDomain(record.syncStatus),
+      visibility: draft.sourceMetadata?.visibility,
+      importedAt: draft.sourceMetadata?.importedAt,
+    },
+    abilityScores: normalizedAbilityScores,
+    savingThrows: normalizedSavingThrows,
+    skills: normalizedSkills,
+    customAttributes: draft.customAttributes ?? [],
+  };
+}
+
+function normalizeAbilityScores(
+  abilityScores: ImportedCharacterDraft["abilityScores"],
+  savingThrows: ImportedCharacterDraft["savingThrows"],
+): ImportedCharacterDraft["abilityScores"] {
+  const nextScores = structuredClone(abilityScores);
+
+  for (const [abilityKey, ability] of Object.entries(nextScores) as Array<
+    [keyof ImportedCharacterDraft["abilityScores"], ImportedCharacterDraft["abilityScores"][keyof ImportedCharacterDraft["abilityScores"]]]
+  >) {
+    const savingThrow = savingThrows.find((entry) => entry.ability === abilityKey);
+
+    ability.modifier = ability.overrideModifier ?? ability.modifier;
+
+    if (savingThrow?.modifier !== undefined && ability.savingThrowModifier === undefined) {
+      ability.savingThrowModifier = savingThrow.modifier;
+    }
+    if (savingThrow?.proficient !== undefined && ability.savingThrowProficient === undefined) {
+      ability.savingThrowProficient = savingThrow.proficient;
+    }
+  }
+
+  return nextScores;
+}
+
+function normalizeSavingThrows(
+  savingThrows: ImportedCharacterDraft["savingThrows"],
+  abilityScores: ImportedCharacterDraft["abilityScores"],
+): ImportedCharacterDraft["savingThrows"] {
+  const byAbility = new Map<
+    ImportedCharacterDraft["savingThrows"][number]["ability"],
+    ImportedCharacterDraft["savingThrows"][number]
+  >();
+
+  for (const savingThrow of savingThrows) {
+    byAbility.set(savingThrow.ability, {
+      ...savingThrow,
+      proficient: savingThrow.proficient ?? false,
+    });
+  }
+
+  for (const [abilityKey, ability] of Object.entries(abilityScores) as Array<
+    [keyof ImportedCharacterDraft["abilityScores"], ImportedCharacterDraft["abilityScores"][keyof ImportedCharacterDraft["abilityScores"]]]
+  >) {
+    if (ability.savingThrowModifier === undefined && ability.savingThrowProficient === undefined) {
+      continue;
+    }
+
+    const existing = byAbility.get(abilityKey);
+    byAbility.set(abilityKey, {
+      ability: abilityKey,
+      modifier: ability.savingThrowModifier ?? existing?.modifier,
+      proficient: ability.savingThrowProficient ?? existing?.proficient ?? false,
+      source: existing?.source ?? ability.source,
+      notes: existing?.notes,
+    });
+  }
+
+  return Array.from(byAbility.values());
 }

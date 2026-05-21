@@ -18,11 +18,11 @@ export function CharacterSkillsPanel({ character }: CharacterSkillsPanelProps) {
             <div key={skill.key} className="table-list__row">
               <div>
                 <strong>{skill.label}</strong>
-                <span>{character.abilityScores[skill.ability].label}</span>
+                <span>{character.abilityScores[skill.linkedAbility].label}</span>
               </div>
               <div className="table-list__meta">
-                <span>{skill.proficiency}</span>
-                <strong>{formatSignedValue(skill.modifier ?? 0)}</strong>
+                <span>{formatSkillProficiency(skill)}</span>
+                <strong>{formatOptionalSignedValue(skill.modifier)}</strong>
               </div>
             </div>
           ))}
@@ -34,6 +34,22 @@ export function CharacterSkillsPanel({ character }: CharacterSkillsPanelProps) {
   );
 }
 
-function formatSignedValue(value: number) {
+function formatOptionalSignedValue(value?: number) {
+  if (value === undefined) {
+    return "No detectado";
+  }
+
   return value >= 0 ? `+${value}` : `${value}`;
+}
+
+function formatSkillProficiency(skill: Character["skills"][number]) {
+  if (skill.expertise) {
+    return "expertise";
+  }
+
+  if (skill.halfProficient) {
+    return "half";
+  }
+
+  return skill.proficient ? "proficient" : "none";
 }

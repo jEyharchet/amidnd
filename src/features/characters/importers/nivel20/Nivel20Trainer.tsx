@@ -232,9 +232,16 @@ export function Nivel20Trainer() {
                   <article key={candidate.id} className="trainer-candidate-card">
                     <div className="trainer-candidate-card__meta">
                       <span className={`trainer-confidence trainer-confidence--${candidate.confidence}`}>
-                        {candidate.confidence}
+                        {candidate.confidence.toUpperCase()}
                       </span>
                       <strong>{candidate.suggestedField ?? "Sin sugerencia"}</strong>
+                      <span className="sheet-detail-card__label">
+                        {rule?.selectionSource === "manual"
+                          ? "Asignacion manual"
+                          : candidate.suggestedField
+                            ? "Sugerencia automatica"
+                            : "Sin sugerencia automatica"}
+                      </span>
                     </div>
 
                     <div className="trainer-candidate-card__grid">
@@ -263,7 +270,7 @@ export function Nivel20Trainer() {
                       <select
                         id={`candidate-action-${candidate.id}`}
                         className="importer-form__input trainer-select"
-                        value={serializeRuleSelection(rule)}
+                        value={serializeRuleSelection(rule, candidate)}
                         onChange={(event) =>
                           handleRuleSelectionChange(
                             candidate,
@@ -325,11 +332,20 @@ function getRuleForCandidate(
   profile: Nivel20MappingProfile,
   candidate: Nivel20TrainerCandidate,
 ) {
-  return profile.rules.find((rule) => rule.candidateId === candidate.id);
+  return profile.rules.find(
+    (rule) => rule.candidateId === candidate.id || (rule.matcherKey && rule.matcherKey === candidate.matcherKey),
+  );
 }
 
-function serializeRuleSelection(rule?: Nivel20MappingRule) {
-  if (!rule || rule.action === "ignore") {
+function serializeRuleSelection(
+  rule: Nivel20MappingRule | undefined,
+  candidate: Nivel20TrainerCandidate,
+) {
+  if (!rule) {
+    return candidate.suggestedField ? `existing:${candidate.suggestedField}` : "ignore";
+  }
+
+  if (rule.action === "ignore") {
     return "ignore";
   }
 
@@ -353,6 +369,7 @@ function handleRuleSelectionChange(
         ...createMappingRuleFromCandidate(candidate),
         action: "ignore",
         targetField: undefined,
+        selectionSource: "manual",
       });
 
       return {
@@ -376,6 +393,7 @@ function handleRuleSelectionChange(
         action: "map-custom",
         targetField: undefined,
         customAttributeKey: nextDefinition.key,
+        selectionSource: "manual",
       });
 
       return {
@@ -394,6 +412,7 @@ function handleRuleSelectionChange(
       action: "map-existing",
       targetField,
       customAttributeKey: undefined,
+      selectionSource: "manual",
     });
 
     return {

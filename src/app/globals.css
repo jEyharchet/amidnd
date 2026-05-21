@@ -601,6 +601,145 @@ h1 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.trainer-panel,
+.trainer-card,
+.trainer-column,
+.trainer-tags,
+.trainer-candidate-list,
+.trainer-candidate-card,
+.trainer-candidate-card__grid,
+.trainer-mapping-controls,
+.trainer-custom-editor,
+.trainer-summary-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.trainer-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 18px;
+}
+
+.trainer-card {
+  padding: 18px;
+  border: 1px solid rgba(104, 63, 27, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 250, 233, 0.46);
+}
+
+.trainer-code-block {
+  max-height: 360px;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  border: 1px solid rgba(103, 62, 27, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 252, 241, 0.7);
+  font-family: "Courier New", monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.trainer-snippet {
+  padding: 12px 14px;
+  border: 1px solid rgba(103, 62, 27, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 252, 241, 0.64);
+}
+
+.trainer-snippet summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.trainer-snippet p {
+  margin: 10px 0 0;
+  line-height: 1.5;
+}
+
+.trainer-summary-grid,
+.trainer-candidate-card__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.trainer-candidate-card {
+  padding: 18px;
+  border: 1px solid rgba(103, 62, 27, 0.18);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 233, 0.78), rgba(236, 214, 167, 0.64));
+}
+
+.trainer-candidate-card__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.trainer-candidate-card__grid p {
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+.trainer-confidence {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(103, 62, 27, 0.14);
+  text-transform: uppercase;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.trainer-confidence--high {
+  background: rgba(54, 120, 71, 0.14);
+}
+
+.trainer-confidence--medium {
+  background: rgba(176, 125, 35, 0.14);
+}
+
+.trainer-confidence--low {
+  background: rgba(137, 70, 39, 0.14);
+}
+
+.trainer-select {
+  appearance: none;
+}
+
+.trainer-custom-editor {
+  padding: 14px;
+  border: 1px dashed rgba(103, 62, 27, 0.22);
+  border-radius: 10px;
+  background: rgba(255, 252, 241, 0.58);
+}
+
+.trainer-field {
+  display: grid;
+  gap: 8px;
+}
+
+.trainer-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.trainer-save-form {
+  margin-top: 8px;
+}
+
 .sheet-back-link {
   display: inline-flex;
   margin-bottom: 24px;
@@ -867,7 +1006,10 @@ h1 {
 
   .importer-preview__summary,
   .importer-preview__sections,
-  .sheet-detail-grid {
+  .sheet-detail-grid,
+  .trainer-layout,
+  .trainer-summary-grid,
+  .trainer-candidate-card__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -879,7 +1021,10 @@ h1 {
   .combat-grid,
   .importer-preview__summary,
   .importer-preview__sections,
-  .sheet-detail-grid {
+  .sheet-detail-grid,
+  .trainer-layout,
+  .trainer-summary-grid,
+  .trainer-candidate-card__grid {
     grid-template-columns: 1fr;
   }
 

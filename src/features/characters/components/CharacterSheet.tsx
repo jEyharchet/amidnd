@@ -10,6 +10,7 @@ import { CharacterEquipmentPanel } from "@/features/characters/components/Charac
 import { CharacterProficienciesPanel } from "@/features/characters/components/CharacterProficienciesPanel";
 import { CharacterQuickActionsPanel } from "@/features/characters/components/CharacterQuickActionsPanel";
 import { CharacterResourcesPanel } from "@/features/characters/components/CharacterResourcesPanel";
+import { CharacterCustomAttributesPanel } from "@/features/characters/components/CharacterCustomAttributesPanel";
 import { CharacterSkillsPanel } from "@/features/characters/components/CharacterSkillsPanel";
 import { CharacterSpellsPanel } from "@/features/characters/components/CharacterSpellsPanel";
 import { CharacterStatsPanel } from "@/features/characters/components/CharacterStatsPanel";
@@ -47,6 +48,7 @@ export function CharacterSheet({ character, topContent }: CharacterSheetProps) {
           <CharacterQuickActionsPanel character={character} />
           <CharacterResourcesPanel character={character} />
           <CharacterCompanionsPanel character={character} />
+          <CharacterCustomAttributesPanel character={character} />
           <CharacterNotesPanel character={character} />
           {process.env.NODE_ENV !== "production" ? (
             <CharacterImportDiagnosticsPanel character={character} />

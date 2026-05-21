@@ -5,6 +5,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { importNivel20CharacterFromUrl } from "@/features/characters/importers/nivel20/nivel20Importer";
+import { getLatestNivel20MappingProfile } from "@/features/characters/server/mapping-profile-store";
 import type {
   Character,
   CharacterAbilityScores,
@@ -95,11 +96,13 @@ export async function syncCharacterFromSource(characterId: string) {
     });
 
     const previousDraft = (character.importedData as ImportedCharacterDraft | null) ?? null;
+    const mappingProfile = await getLatestNivel20MappingProfile();
     const importResult = await importNivel20CharacterFromUrl({
       sourceUrl: character.sourceUrl,
       fallbackName: character.name,
       fallbackPlayerName: character.playerName,
       previousDraft,
+      mappingProfile: mappingProfile ?? undefined,
     });
 
     if (!importResult.importedDraft) {
@@ -240,6 +243,7 @@ export function mapDbCharacterToDomainCharacter(record: DbCharacter): Character 
     carriedItems: baseDraft.carriedItems,
     otherPossessions: baseDraft.otherPossessions,
     companions: baseDraft.companions,
+    customAttributes: baseDraft.customAttributes,
     notes: baseDraft.notes,
     sourceMetadata: {
       source: mapPrismaSourceToDomain(record.source),
@@ -344,6 +348,7 @@ function createLocalDraftFromRecord(record: DbCharacter): ImportedCharacterDraft
     otherPossessions: [],
     spellcasting: [],
     companions: [],
+    customAttributes: [],
     notes: [
       {
         id: "local-character-note",
@@ -398,6 +403,7 @@ function normalizeImportedDraft(
 
   return {
     ...draft,
+    customAttributes: draft.customAttributes ?? [],
     sourceMetadata: {
       ...draft.sourceMetadata,
       syncStatus: inferredDiagnostics.state === "mock" ? "mock" : inferredDiagnostics.state === "partial" ? "partial" : draft.sourceMetadata.syncStatus,

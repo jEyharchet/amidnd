@@ -4,6 +4,7 @@ import type {
   CharacterAttack,
   CharacterBackgroundDetails,
   CharacterClassEntry,
+  CharacterCustomAttributeDefinition,
   CharacterImportDiagnostics,
   CharacterImportIssue,
   CharacterImportRawSnapshot,
@@ -14,12 +15,20 @@ import type {
   CharacterSpellSlotLevel,
   CharacterTrait,
   ImportedCharacterDraft,
+  Nivel20MappingProfile,
 } from "@/features/characters/types";
 import type {
+  Nivel20CandidateField,
   Nivel20ImportResult,
   Nivel20ParsedSection,
   Nivel20RawCharacterSnapshot,
+  Nivel20TrainerCandidate,
+  Nivel20TrainerInspection,
 } from "@/features/characters/importers/nivel20/nivel20MappingTypes";
+import {
+  applyNivel20MappingProfileToDraft,
+  createDefaultNivel20MappingProfile,
+} from "@/features/characters/importers/nivel20/nivel20MappingProfile";
 
 const nivel20Hosts = new Set(["nivel20.com", "www.nivel20.com"]);
 
@@ -44,6 +53,7 @@ type FetchContext = {
   fallbackName?: string;
   fallbackPlayerName?: string | null;
   previousDraft?: ImportedCharacterDraft | null;
+  mappingProfile?: Nivel20MappingProfile;
 };
 
 type SectionState = "real" | "mock" | "missing";
@@ -265,6 +275,7 @@ export async function importNivel20CharacterFromUrl({
   fallbackName,
   fallbackPlayerName,
   previousDraft,
+  mappingProfile,
 }: FetchContext): Promise<Nivel20ImportResult> {
   const validated = validateNivel20Url(sourceUrl);
 
@@ -280,20 +291,96 @@ export async function importNivel20CharacterFromUrl({
     fallbackPlayerName,
     previousDraft,
   });
-  const diagnostics = merged.importDiagnostics;
+  const candidates = buildTrainerCandidates(fetchResult, merged);
+  const mappedDraft = applyNivel20MappingProfileToDraft(
+    merged,
+    mappingProfile,
+    candidates,
+  );
+  const diagnostics = mappedDraft.importDiagnostics;
 
   return {
     status: diagnostics?.state === "real" ? "success" : "partial",
     sourceUrl: validated.sourceUrl,
-    detectedCharacterName: merged.identity.name,
+    detectedCharacterName: mappedDraft.identity.name,
     parsedCharacter: {
-      detectedCharacterName: merged.identity.name,
+      detectedCharacterName: mappedDraft.identity.name,
       sections: createParsedSectionsFromDiagnostics(diagnostics),
-      draft: merged,
+      draft: mappedDraft,
     },
-    importedDraft: merged,
-    issues: merged.importIssues,
-    rawSnapshot: createRawSnapshotFromDraft(merged),
+    importedDraft: mappedDraft,
+    issues: mappedDraft.importIssues,
+    rawSnapshot: createRawSnapshotFromDraft(mappedDraft),
+  };
+}
+
+export async function inspectNivel20SourceForTrainer({
+  sourceUrl,
+  fallbackName,
+  fallbackPlayerName,
+  previousDraft,
+  mappingProfile,
+}: FetchContext): Promise<Nivel20TrainerInspection> {
+  const validated = validateNivel20Url(sourceUrl);
+
+  if (!validated.ok) {
+    const emptyDraft = createEmptyImportedDraft({
+      sourceUrl: validated.sourceUrl,
+      fallbackName,
+      fallbackPlayerName,
+    });
+    const profile = createDefaultNivel20MappingProfile(mappingProfile);
+
+    return {
+      sourceUrl: validated.sourceUrl,
+      normalizedText: "",
+      htmlSnapshot: "",
+      detectedSections: [],
+      parsedFields: [],
+      missingFields: [],
+      candidates: [],
+      issues: validated.issues,
+      baseDraft: emptyDraft,
+      mappedDraft: emptyDraft,
+      mappingProfile: profile,
+      customAttributeDefinitions: profile.customAttributeDefinitions,
+    };
+  }
+
+  const parsed = await fetchAndParseNivel20Html(validated.sourceUrl);
+  const baseDraft = buildImportedDraft({
+    sourceUrl: validated.sourceUrl,
+    parsed,
+    fallbackName,
+    fallbackPlayerName,
+    previousDraft,
+  });
+  const profile = createDefaultNivel20MappingProfile(mappingProfile);
+  const candidates = buildTrainerCandidates(parsed, baseDraft);
+  const mappedDraft = applyNivel20MappingProfileToDraft(baseDraft, profile, candidates);
+
+  return {
+    sourceUrl: validated.sourceUrl,
+    normalizedText: parsed.text,
+    htmlSnapshot: parsed.html,
+    detectedSections: sectionDefinitions
+      .filter(
+        (section) =>
+          parsed.detectedSections.includes(section.key) || Boolean(parsed.sections[section.key]),
+      )
+      .map((section) => ({
+        key: section.key,
+        label: section.label,
+        snippet: parsed.sections[section.key],
+      })),
+    parsedFields: parsed.parsedFields,
+    missingFields: mappedDraft.importDiagnostics?.missingFields ?? [],
+    candidates,
+    issues: [...validated.issues, ...mappedDraft.importIssues],
+    baseDraft,
+    mappedDraft,
+    mappingProfile: profile,
+    customAttributeDefinitions: profile.customAttributeDefinitions,
   };
 }
 
@@ -1257,6 +1344,7 @@ function createEmptyImportedDraft({
     otherPossessions: [],
     spellcasting: [],
     companions: [],
+    customAttributes: [],
     notes: [],
     importIssues: [],
   };
@@ -1374,6 +1462,338 @@ function createRawSnapshotFromDraft(draft: ImportedCharacterDraft): Nivel20RawCh
     sections: draft.rawImportData?.sections,
     rawImportData: draft.rawImportData,
   };
+}
+
+function buildTrainerCandidates(
+  parsed: ParsedHtmlResult,
+  draft: ImportedCharacterDraft,
+): Nivel20TrainerCandidate[] {
+  const candidates: Nivel20TrainerCandidate[] = [];
+
+  const pushCandidate = ({
+    id,
+    sectionKey,
+    originalText,
+    detectedValue,
+    suggestedField,
+    confidence,
+    selectorHint,
+  }: {
+    id: string;
+    sectionKey: string;
+    originalText: string;
+    detectedValue: string;
+    suggestedField?: Nivel20CandidateField;
+    confidence: "low" | "medium" | "high";
+    selectorHint?: string;
+  }) => {
+    if (!detectedValue.trim()) {
+      return;
+    }
+
+    candidates.push({
+      id,
+      sectionKey,
+      originalText,
+      detectedValue,
+      suggestedField,
+      confidence,
+      selectorHint,
+    });
+  };
+
+  if (draft.identity.name) {
+    pushCandidate({
+      id: "identity-name",
+      sectionKey: "identity",
+      originalText: parsed.sections.identity ?? draft.identity.name,
+      detectedValue: draft.identity.name,
+      suggestedField: "name",
+      confidence: "high",
+      selectorHint: "text-match:nombre",
+    });
+  }
+  if (draft.identity.species) {
+    pushCandidate({
+      id: "identity-species",
+      sectionKey: "identity",
+      originalText: parsed.sections.identity ?? draft.identity.species,
+      detectedValue: draft.identity.species,
+      suggestedField: "species",
+      confidence: "medium",
+      selectorHint: "text-match:raza|especie",
+    });
+  }
+  if (draft.classes[0]) {
+    pushCandidate({
+      id: "identity-class",
+      sectionKey: "identity",
+      originalText: parsed.sections.identity ?? draft.classes[0].name,
+      detectedValue: draft.classes[0].name,
+      suggestedField: "class",
+      confidence: "high",
+      selectorHint: "text-match:clase",
+    });
+    pushCandidate({
+      id: "identity-level",
+      sectionKey: "identity",
+      originalText: parsed.sections.identity ?? String(draft.totalLevel),
+      detectedValue: String(draft.totalLevel),
+      suggestedField: "level",
+      confidence: "high",
+      selectorHint: "text-match:nivel",
+    });
+  }
+
+  for (const [abilityKey, ability] of Object.entries(draft.abilityScores)) {
+    if (!ability.score) {
+      continue;
+    }
+
+    pushCandidate({
+      id: `ability-${abilityKey}`,
+      sectionKey: "ability-scores",
+      originalText: parsed.sections["ability-scores"] ?? `${ability.label} ${ability.score}`,
+      detectedValue: String(ability.score),
+      suggestedField: `abilityScores.${abilityKey}.score` as Nivel20CandidateField,
+      confidence: "high",
+      selectorHint: `text-match:${ability.label.toLowerCase()}`,
+    });
+  }
+
+  if (draft.hitPoints.maximum) {
+    pushCandidate({
+      id: "combat-hitpoints-max",
+      sectionKey: "combat",
+      originalText: parsed.sections.combat ?? `PG ${draft.hitPoints.maximum}`,
+      detectedValue: String(draft.hitPoints.maximum),
+      suggestedField: "hitPoints.max",
+      confidence: "high",
+      selectorHint: "text-match:pg",
+    });
+  }
+  if (draft.armor.armorClass) {
+    pushCandidate({
+      id: "combat-armor-class",
+      sectionKey: "combat",
+      originalText: parsed.sections.combat ?? `CA ${draft.armor.armorClass}`,
+      detectedValue: String(draft.armor.armorClass),
+      suggestedField: "armorClass.value",
+      confidence: "high",
+      selectorHint: "text-match:ca",
+    });
+  }
+  if (draft.initiative !== undefined && draft.initiative !== 0) {
+    pushCandidate({
+      id: "combat-initiative",
+      sectionKey: "combat",
+      originalText: parsed.sections.combat ?? `Iniciativa ${draft.initiative}`,
+      detectedValue: String(draft.initiative),
+      suggestedField: "initiative.value",
+      confidence: "high",
+      selectorHint: "text-match:iniciativa",
+    });
+  }
+  if (draft.speed && draft.speed !== "No detectada") {
+    pushCandidate({
+      id: "combat-speed",
+      sectionKey: "combat",
+      originalText: parsed.sections.combat ?? draft.speed,
+      detectedValue: draft.speed,
+      suggestedField: "speed.walk",
+      confidence: "medium",
+      selectorHint: "text-match:velocidad",
+    });
+  }
+  if (draft.proficiencyBonus !== undefined) {
+    pushCandidate({
+      id: "combat-proficiency-bonus",
+      sectionKey: "combat",
+      originalText: parsed.sections.combat ?? String(draft.proficiencyBonus),
+      detectedValue: String(draft.proficiencyBonus),
+      suggestedField: "proficiencyBonus",
+      confidence: "medium",
+      selectorHint: "text-match:competencia",
+    });
+  }
+
+  buildArrayCandidates(parsed, draft.skills.map((skill) => skill.label), "skills", "skills[]", candidates);
+  buildArrayCandidates(
+    parsed,
+    draft.savingThrows.map((savingThrow) => `${savingThrow.ability}:${savingThrow.modifier ?? 0}`),
+    "saving-throws",
+    "savingThrows[]",
+    candidates,
+  );
+  buildArrayCandidates(parsed, draft.attacks.map((attack) => attack.name), "attacks", "attacks[]", candidates);
+  buildArrayCandidates(
+    parsed,
+    draft.spellcasting.flatMap((entry) => entry.spells.map((spell) => spell.name)),
+    "spells",
+    "spells[]",
+    candidates,
+  );
+  buildArrayCandidates(
+    parsed,
+    [
+      ...draft.equippedItems.map((item) => item.name),
+      ...draft.carriedItems.map((item) => item.name),
+      ...draft.otherPossessions.map((item) => item.name),
+    ],
+    "equipment",
+    "equipment[]",
+    candidates,
+  );
+  buildArrayCandidates(
+    parsed,
+    draft.classTraits.map((trait) => trait.name),
+    "traits",
+    "traits[]",
+    candidates,
+  );
+  buildArrayCandidates(parsed, draft.feats.map((feat) => feat.name), "traits", "feats[]", candidates);
+  buildArrayCandidates(
+    parsed,
+    draft.quickActions.map((action) => action.name),
+    "quick-actions",
+    "actions[]",
+    candidates,
+  );
+  buildArrayCandidates(
+    parsed,
+    draft.resources.map((resource) => resource.label),
+    "quick-actions",
+    "resources[]",
+    candidates,
+  );
+  buildArrayCandidates(
+    parsed,
+    draft.companions.map((companion) => companion.name),
+    "companions",
+    "companions[]",
+    candidates,
+  );
+  buildArrayCandidates(
+    parsed,
+    draft.notes.map((note) => note.title),
+    "notes",
+    "notes[]",
+    candidates,
+  );
+
+  if (draft.background) {
+    pushCandidate({
+      id: "background-name",
+      sectionKey: "background",
+      originalText: parsed.sections.background ?? draft.background,
+      detectedValue: draft.background,
+      suggestedField: "background.*",
+      confidence: "medium",
+      selectorHint: "text-match:trasfondo",
+    });
+  }
+  if (draft.alignment) {
+    pushCandidate({
+      id: "background-alignment",
+      sectionKey: "background",
+      originalText: parsed.sections.background ?? draft.alignment,
+      detectedValue: draft.alignment,
+      suggestedField: "background.alignment",
+      confidence: "medium",
+      selectorHint: "text-match:alineamiento",
+    });
+  }
+  if (draft.history) {
+    pushCandidate({
+      id: "background-history",
+      sectionKey: "background",
+      originalText: parsed.sections.background ?? draft.history,
+      detectedValue: draft.history,
+      suggestedField: "background.history",
+      confidence: "low",
+      selectorHint: "text-match:historia",
+    });
+  }
+  if (draft.backgroundDetails?.feature) {
+    pushCandidate({
+      id: "background-feature",
+      sectionKey: "background",
+      originalText: parsed.sections.background ?? draft.backgroundDetails.feature,
+      detectedValue: draft.backgroundDetails.feature,
+      suggestedField: "background.feature",
+      confidence: "low",
+      selectorHint: "text-match:rasgo",
+    });
+  }
+
+  for (const section of sectionDefinitions) {
+    if (!parsed.sections[section.key]) {
+      continue;
+    }
+
+    pushCandidate({
+      id: `section-snippet-${section.key}`,
+      sectionKey: section.key,
+      originalText: parsed.sections[section.key],
+      detectedValue: parsed.sections[section.key],
+      suggestedField: guessFallbackField(section.key),
+      confidence: "low",
+      selectorHint: `section:${section.key}`,
+    });
+  }
+
+  return dedupeById(candidates, (candidate) => candidate.id);
+}
+
+function buildArrayCandidates(
+  parsed: ParsedHtmlResult,
+  values: string[],
+  sectionKey: ImportSectionKey,
+  suggestedField: Nivel20CandidateField,
+  candidates: Nivel20TrainerCandidate[],
+) {
+  values.forEach((value, index) => {
+    if (!value) {
+      return;
+    }
+
+    candidates.push({
+      id: `${sectionKey}-${slugify(value)}-${index}`,
+      sectionKey,
+      originalText: parsed.sections[sectionKey] ?? value,
+      detectedValue: value,
+      suggestedField,
+      confidence: "medium",
+      selectorHint: `section:${sectionKey}`,
+    });
+  });
+}
+
+function guessFallbackField(sectionKey: ImportSectionKey): Nivel20CandidateField {
+  switch (sectionKey) {
+    case "background":
+      return "background.*";
+    case "quick-actions":
+      return "actions[]";
+    case "companions":
+      return "companions[]";
+    case "spells":
+      return "spells[]";
+    case "equipment":
+      return "equipment[]";
+    case "traits":
+      return "traits[]";
+    case "notes":
+      return "notes[]";
+    case "attacks":
+      return "attacks[]";
+    case "skills":
+      return "skills[]";
+    case "saving-throws":
+      return "savingThrows[]";
+    default:
+      return "notes[]";
+  }
 }
 
 function createFailedResult(

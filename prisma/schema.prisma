@@ -19,6 +19,10 @@ enum CharacterSyncStatus {
   ERROR
 }
 
+enum MappingProfileSource {
+  NIVEL20
+}
+
 model Character {
   id               String              @id @default(cuid())
   name             String
@@ -34,4 +38,33 @@ model Character {
   rawImportData    Json?
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
+}
+
+model MappingProfile {
+  id                         String                    @id @default(cuid())
+  source                     MappingProfileSource
+  version                    Int
+  rules                      Json
+  customAttributeDefinitions Json
+  createdAt                  DateTime                  @default(now())
+  updatedAt                  DateTime                  @updatedAt
+  customDefinitions          CustomAttributeDefinition[]
+}
+
+model CustomAttributeDefinition {
+  id               String         @id @default(cuid())
+  mappingProfileId String
+  key              String
+  label            String
+  type             String
+  category         String
+  description      String?
+  visibleInSheet   Boolean        @default(true)
+  visualOrder      Int?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  mappingProfile   MappingProfile @relation(fields: [mappingProfileId], references: [id], onDelete: Cascade)
+
+  @@index([mappingProfileId])
+  @@unique([mappingProfileId, key])
 }

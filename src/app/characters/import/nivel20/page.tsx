@@ -22,6 +22,9 @@ export default function Nivel20ImportPage() {
               tecnica, sin pedir credenciales ni guardar informacion sensible.
             </p>
           </div>
+          <Link href="/characters/import/nivel20/trainer" className="primary-link">
+            Abrir trainer de mapeo
+          </Link>
         </div>
 
         <Nivel20ImportForm />

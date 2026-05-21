@@ -113,6 +113,73 @@ export type CharacterImportState = "real" | "partial" | "mock";
 
 export type CharacterImportSectionStatus = "real" | "partial" | "mock" | "missing";
 
+export type CharacterCustomAttributeType =
+  | "text"
+  | "number"
+  | "boolean"
+  | "list"
+  | "object"
+  | "richText";
+
+export type CharacterCustomAttributeCategory =
+  | "identity"
+  | "combat"
+  | "skills"
+  | "spells"
+  | "equipment"
+  | "background"
+  | "traits"
+  | "actions"
+  | "companions"
+  | "custom";
+
+export type CharacterCustomAttributeDefinition = {
+  key: string;
+  label: string;
+  type: CharacterCustomAttributeType;
+  category: CharacterCustomAttributeCategory;
+  description?: string;
+  visibleInSheet: boolean;
+  visualOrder?: number;
+  createdFromSource?: CharacterSource;
+};
+
+export type CharacterCustomAttributeValue = {
+  key: string;
+  label: string;
+  type: CharacterCustomAttributeType;
+  category: CharacterCustomAttributeCategory;
+  value: string | number | boolean | string[] | Record<string, unknown> | null;
+  visibleInSheet: boolean;
+  visualOrder?: number;
+  source?: string;
+  sourceCandidateId?: string;
+  notes?: string;
+};
+
+export type Nivel20MappingRule = {
+  id: string;
+  candidateId: string;
+  sourcePath: string;
+  originalText: string;
+  detectedValue: string;
+  selectorHint?: string;
+  confidence: "low" | "medium" | "high";
+  action: "map-existing" | "ignore" | "map-custom";
+  targetField?: string;
+  customAttributeKey?: string;
+};
+
+export type Nivel20MappingProfile = {
+  id?: string;
+  source: "NIVEL20";
+  version: number;
+  rules: Nivel20MappingRule[];
+  customAttributeDefinitions: CharacterCustomAttributeDefinition[];
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type CharacterImportSectionDiagnostic = {
   key: string;
   label: string;
@@ -340,6 +407,7 @@ export type ImportedCharacterDraft = {
   otherPossessions: CharacterEquipmentItem[];
   spellcasting: CharacterSpellcasting[];
   companions: CharacterCompanion[];
+  customAttributes: CharacterCustomAttributeValue[];
   notes: CharacterNote[];
   importIssues: CharacterImportIssue[];
   importDiagnostics?: CharacterImportDiagnostics;
@@ -382,6 +450,7 @@ export type Character = {
   carriedItems?: CharacterEquipmentItem[];
   otherPossessions?: CharacterEquipmentItem[];
   companions?: CharacterCompanion[];
+  customAttributes?: CharacterCustomAttributeValue[];
   notes: CharacterNote[];
   sourceMetadata: CharacterSourceMetadata;
   importDiagnostics?: CharacterImportDiagnostics;

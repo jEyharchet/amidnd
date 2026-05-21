@@ -12,6 +12,7 @@ export { CharacterNotesPanel } from "@/features/characters/components/CharacterN
 export { CharacterStatusBadge } from "@/features/characters/components/CharacterStatusBadge";
 export { CharacterCreateForm } from "@/features/characters/components/CharacterCreateForm";
 export { CharacterSyncClient } from "@/features/characters/components/CharacterSyncClient";
+export { CharacterCustomAttributesPanel } from "@/features/characters/components/CharacterCustomAttributesPanel";
 export type {
   Character,
   CharacterAbilityScores,
@@ -21,6 +22,10 @@ export type {
   CharacterBackgroundDetails,
   CharacterClassEntry,
   CharacterCompanion,
+  CharacterCustomAttributeCategory,
+  CharacterCustomAttributeDefinition,
+  CharacterCustomAttributeType,
+  CharacterCustomAttributeValue,
   CharacterEquipmentItem,
   CharacterFeat,
   CharacterHitPoints,
@@ -42,4 +47,6 @@ export type {
   CharacterImportSectionStatus,
   CharacterTrait,
   ImportedCharacterDraft,
+  Nivel20MappingProfile,
+  Nivel20MappingRule,
 } from "@/features/characters/types";

@@ -622,7 +622,7 @@ function buildImportedDraft({
     fallbackName,
     fallbackPlayerName,
   });
-  const allowPreviousFallback = !parsed.genericLanding;
+  const allowPreviousFallback = false;
 
   const sectionStates: Partial<Record<ImportSectionKey, SectionState>> = {};
 
@@ -1456,6 +1456,13 @@ function decodeHtmlEntities(value: string) {
     .replace(/&ntilde;/gi, "n");
 }
 
+function normalizeForInspection(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 function parseIdentity(text: string, title: string | undefined, parsedFields: string[]) {
   const name =
     parseLabeledText(text, ["nombre"], parsedFields, "identity.name") ??
@@ -1896,8 +1903,13 @@ function isSuspiciousText(
     return false;
   }
 
-  const normalized = value.toLowerCase();
-  return value.length > maxLength || markers.some((marker) => normalized.includes(marker));
+  const normalized = normalizeForInspection(value);
+  return (
+    value.length > maxLength ||
+    markers.some((marker) => normalized.includes(normalizeForInspection(marker))) ||
+    /\([a-z]{3}\)\s*[+-]?\d/.test(normalized) ||
+    /(acrobacias|interpretacion|intimidar|investigacion|medicina|sigilo)/i.test(normalized)
+  );
 }
 
 function collectSectionSnippets(text: string) {

@@ -87,6 +87,7 @@ type ParsedHtmlResult = {
   finalUrl: string;
   statusCode: number;
   contentType: string;
+  genericLanding: boolean;
   sections: Record<string, string>;
   detectedSections: ImportSectionKey[];
   parsedFields: string[];
@@ -430,6 +431,7 @@ async function fetchAndParseNivel20Html(sourceUrl: string): Promise<ParsedHtmlRe
         finalUrl,
         statusCode: response.status,
         contentType,
+        genericLanding,
         sections,
         detectedSections: [],
         parsedFields,
@@ -570,6 +572,7 @@ async function fetchAndParseNivel20Html(sourceUrl: string): Promise<ParsedHtmlRe
       finalUrl,
       statusCode: response.status,
       contentType,
+      genericLanding: false,
       sections,
       detectedSections,
       parsedFields,
@@ -585,6 +588,7 @@ async function fetchAndParseNivel20Html(sourceUrl: string): Promise<ParsedHtmlRe
       finalUrl: sourceUrl,
       statusCode: 0,
       contentType: "unknown",
+      genericLanding: false,
       sections: {},
       detectedSections: [],
       parsedFields: [],
@@ -618,6 +622,7 @@ function buildImportedDraft({
     fallbackName,
     fallbackPlayerName,
   });
+  const allowPreviousFallback = !parsed.genericLanding;
 
   const sectionStates: Partial<Record<ImportSectionKey, SectionState>> = {};
 
@@ -626,184 +631,206 @@ function buildImportedDraft({
     identity: mergeValue(
       "identity",
       parsed.values.identity,
-      previousDraft?.identity,
+      allowPreviousFallback ? previousDraft?.identity : undefined,
       baseDraft.identity,
       sectionStates,
+      allowPreviousFallback,
     ),
     classes: mergeArray(
       "identity",
       parsed.values.classes,
-      previousDraft?.classes,
+      allowPreviousFallback ? previousDraft?.classes : undefined,
       baseDraft.classes,
       sectionStates,
+      allowPreviousFallback,
     ),
     totalLevel:
       parsed.values.totalLevel ??
-      previousDraft?.totalLevel ??
+      (allowPreviousFallback ? previousDraft?.totalLevel : undefined) ??
       baseDraft.totalLevel,
     background:
       parsed.values.background ??
-      previousDraft?.background ??
+      (allowPreviousFallback ? previousDraft?.background : undefined) ??
       baseDraft.background,
     backgroundDetails: mergeValue(
       "background",
       parsed.values.backgroundDetails,
-      previousDraft?.backgroundDetails,
+      allowPreviousFallback ? previousDraft?.backgroundDetails : undefined,
       baseDraft.backgroundDetails,
       sectionStates,
+      allowPreviousFallback,
     ),
     alignment:
       parsed.values.alignment ??
-      previousDraft?.alignment ??
+      (allowPreviousFallback ? previousDraft?.alignment : undefined) ??
       baseDraft.alignment,
     history:
       parsed.values.history ??
-      previousDraft?.history ??
+      (allowPreviousFallback ? previousDraft?.history : undefined) ??
       baseDraft.history,
     languages: mergeArray(
       "proficiencies",
       parsed.values.languages,
-      previousDraft?.languages,
+      allowPreviousFallback ? previousDraft?.languages : undefined,
       baseDraft.languages,
       sectionStates,
+      allowPreviousFallback,
     ),
     abilityScores: mergeValue(
       "ability-scores",
       parsed.values.abilityScores,
-      previousDraft?.abilityScores,
+      allowPreviousFallback ? previousDraft?.abilityScores : undefined,
       baseDraft.abilityScores,
       sectionStates,
+      allowPreviousFallback,
     ),
     hitPoints: mergeValue(
       "combat",
       parsed.values.hitPoints,
-      previousDraft?.hitPoints,
+      allowPreviousFallback ? previousDraft?.hitPoints : undefined,
       baseDraft.hitPoints,
       sectionStates,
+      allowPreviousFallback,
     ),
     armor: mergeValue(
       "combat",
       parsed.values.armor,
-      previousDraft?.armor,
+      allowPreviousFallback ? previousDraft?.armor : undefined,
       baseDraft.armor,
       sectionStates,
+      allowPreviousFallback,
     ),
     initiative:
       parsed.values.initiative ??
-      previousDraft?.initiative ??
+      (allowPreviousFallback ? previousDraft?.initiative : undefined) ??
       baseDraft.initiative,
     speed:
       parsed.values.speed ??
-      previousDraft?.speed ??
+      (allowPreviousFallback ? previousDraft?.speed : undefined) ??
       baseDraft.speed,
     proficiencyBonus:
       parsed.values.proficiencyBonus ??
-      previousDraft?.proficiencyBonus ??
+      (allowPreviousFallback ? previousDraft?.proficiencyBonus : undefined) ??
       baseDraft.proficiencyBonus,
     savingThrows: mergeArray(
       "saving-throws",
       parsed.values.savingThrows,
-      previousDraft?.savingThrows,
+      allowPreviousFallback ? previousDraft?.savingThrows : undefined,
       baseDraft.savingThrows,
       sectionStates,
+      allowPreviousFallback,
     ),
     skills: mergeArray(
       "skills",
       parsed.values.skills,
-      previousDraft?.skills,
+      allowPreviousFallback ? previousDraft?.skills : undefined,
       baseDraft.skills,
       sectionStates,
+      allowPreviousFallback,
     ),
     proficiencies: mergeArray(
       "proficiencies",
       parsed.values.proficiencies,
-      previousDraft?.proficiencies,
+      allowPreviousFallback ? previousDraft?.proficiencies : undefined,
       baseDraft.proficiencies,
       sectionStates,
+      allowPreviousFallback,
     ),
     resources: mergeArray(
       "quick-actions",
       parsed.values.resources,
-      previousDraft?.resources,
+      allowPreviousFallback ? previousDraft?.resources : undefined,
       baseDraft.resources,
       sectionStates,
+      allowPreviousFallback,
     ),
     attacks: mergeArray(
       "attacks",
       parsed.values.attacks,
-      previousDraft?.attacks,
+      allowPreviousFallback ? previousDraft?.attacks : undefined,
       baseDraft.attacks,
       sectionStates,
+      allowPreviousFallback,
     ),
     quickActions: mergeArray(
       "quick-actions",
       parsed.values.quickActions,
-      previousDraft?.quickActions,
+      allowPreviousFallback ? previousDraft?.quickActions : undefined,
       baseDraft.quickActions,
       sectionStates,
+      allowPreviousFallback,
     ),
     racialTraits: mergeArray(
       "traits",
       parsed.values.racialTraits,
-      previousDraft?.racialTraits,
+      allowPreviousFallback ? previousDraft?.racialTraits : undefined,
       baseDraft.racialTraits,
       sectionStates,
+      allowPreviousFallback,
     ),
     classTraits: mergeArray(
       "traits",
       parsed.values.classTraits,
-      previousDraft?.classTraits,
+      allowPreviousFallback ? previousDraft?.classTraits : undefined,
       baseDraft.classTraits,
       sectionStates,
+      allowPreviousFallback,
     ),
     feats: mergeArray(
       "traits",
       parsed.values.feats,
-      previousDraft?.feats,
+      allowPreviousFallback ? previousDraft?.feats : undefined,
       baseDraft.feats,
       sectionStates,
+      allowPreviousFallback,
     ),
     equippedItems: mergeArray(
       "equipment",
       parsed.values.equippedItems,
-      previousDraft?.equippedItems,
+      allowPreviousFallback ? previousDraft?.equippedItems : undefined,
       baseDraft.equippedItems,
       sectionStates,
+      allowPreviousFallback,
     ),
     carriedItems: mergeArray(
       "equipment",
       parsed.values.carriedItems,
-      previousDraft?.carriedItems,
+      allowPreviousFallback ? previousDraft?.carriedItems : undefined,
       baseDraft.carriedItems,
       sectionStates,
+      allowPreviousFallback,
     ),
     otherPossessions: mergeArray(
       "equipment",
       parsed.values.otherPossessions,
-      previousDraft?.otherPossessions,
+      allowPreviousFallback ? previousDraft?.otherPossessions : undefined,
       baseDraft.otherPossessions,
       sectionStates,
+      allowPreviousFallback,
     ),
     spellcasting: mergeArray(
       "spells",
       parsed.values.spellcasting,
-      previousDraft?.spellcasting,
+      allowPreviousFallback ? previousDraft?.spellcasting : undefined,
       baseDraft.spellcasting,
       sectionStates,
+      allowPreviousFallback,
     ),
     companions: mergeArray(
       "companions",
       parsed.values.companions,
-      previousDraft?.companions,
+      allowPreviousFallback ? previousDraft?.companions : undefined,
       baseDraft.companions,
       sectionStates,
+      allowPreviousFallback,
     ),
     notes: mergeArray(
       "notes",
       parsed.values.notes,
-      previousDraft?.notes,
+      allowPreviousFallback ? previousDraft?.notes : undefined,
       baseDraft.notes,
       sectionStates,
+      allowPreviousFallback,
     ),
     importIssues: [],
   };
@@ -1183,9 +1210,13 @@ function createEmptyImportedDraft({
   fallbackName?: string;
   fallbackPlayerName?: string | null;
 }): ImportedCharacterDraft {
+  const normalizedFallbackName = fallbackName?.trim();
+
   return {
     identity: {
-      name: fallbackName ?? "Ficha de Nivel20",
+      name: normalizedFallbackName?.length
+        ? sanitizeCharacterName(normalizedFallbackName, sourceUrl)
+        : humanizeSlugFromUrl(sourceUrl) || "Ficha de Nivel20",
       playerName: fallbackPlayerName ?? undefined,
     },
     sourceMetadata: {
@@ -1231,7 +1262,7 @@ function createEmptyImportedDraft({
   };
 }
 
-function sanitizeImportedDraft(draft: ImportedCharacterDraft, sourceUrl: string) {
+export function sanitizeImportedDraft(draft: ImportedCharacterDraft, sourceUrl: string) {
   const fallbackName = humanizeSlugFromUrl(sourceUrl);
   const suspiciousMarkers = [
     "trasfondos",
@@ -1240,7 +1271,15 @@ function sanitizeImportedDraft(draft: ImportedCharacterDraft, sourceUrl: string)
     "estados de personajes",
     "acciones informacion",
     "resumen de tus ataques",
+    "companeros acciones",
+    "informacion trasfondo",
+    "informacion informacion",
+    "categor-a",
+    "ballestas",
+    "recarga",
   ];
+
+  draft.identity.name = sanitizeCharacterName(draft.identity.name, sourceUrl);
 
   if (isSuspiciousText(draft.identity.name, suspiciousMarkers, 80)) {
     draft.identity.name = fallbackName;
@@ -1272,14 +1311,47 @@ function sanitizeImportedDraft(draft: ImportedCharacterDraft, sourceUrl: string)
     if (isSuspiciousText(draft.backgroundDetails.history, suspiciousMarkers, 160)) {
       draft.backgroundDetails.history = undefined;
     }
+    draft.backgroundDetails.personalityTraits = draft.backgroundDetails.personalityTraits?.filter(
+      (entry) => !isSuspiciousText(entry, suspiciousMarkers, 80),
+    );
+    draft.backgroundDetails.ideals = draft.backgroundDetails.ideals?.filter(
+      (entry) => !isSuspiciousText(entry, suspiciousMarkers, 80),
+    );
+    draft.backgroundDetails.bonds = draft.backgroundDetails.bonds?.filter(
+      (entry) => !isSuspiciousText(entry, suspiciousMarkers, 80),
+    );
+    draft.backgroundDetails.flaws = draft.backgroundDetails.flaws?.filter(
+      (entry) => !isSuspiciousText(entry, suspiciousMarkers, 80),
+    );
+  }
+
+  if (isSuspiciousText(draft.speed, suspiciousMarkers, 32) || hasRepeatedSpeedNoise(draft.speed)) {
+    draft.speed = "No detectada";
+  }
+  if (
+    isSuspiciousText(draft.armor.speed, suspiciousMarkers, 32) ||
+    hasRepeatedSpeedNoise(draft.armor.speed)
+  ) {
+    draft.armor.speed = draft.speed;
   }
 
   draft.proficiencies = draft.proficiencies.filter(
-    (entry) => !isSuspiciousText(entry.label, suspiciousMarkers, 50),
+    (entry) =>
+      !isSuspiciousText(entry.label, suspiciousMarkers, 40) &&
+      !/categor/i.test(entry.label) &&
+      !/ballesta de mano/i.test(entry.label) &&
+      !/^[a-z]+\s+[A-Z]/.test(entry.label),
   );
   draft.attacks = draft.attacks.filter(
-    (entry) => !isSuspiciousText(entry.name, suspiciousMarkers, 40),
+    (entry) =>
+      !isSuspiciousText(entry.name, suspiciousMarkers, 40) &&
+      !/^(o|y)\s+/i.test(entry.name) &&
+      !/^(perforante|cortante|contundente|veneno|fuego)\b/i.test(entry.name),
   );
+  draft.spellcasting = draft.spellcasting.filter((entry) => {
+    const notesAreSuspicious = isSuspiciousText(entry.notes, suspiciousMarkers, 160);
+    return !notesAreSuspicious;
+  });
 }
 
 function createEmptyAbilityScores(): CharacterAbilityScores {
@@ -1887,10 +1959,17 @@ function slugify(value: string) {
 function humanizeSlugFromUrl(sourceUrl: string) {
   try {
     const parsedUrl = new URL(sourceUrl);
-    const segments = parsedUrl.pathname.split("/").filter(Boolean);
-    const lastSegment = segments.at(-1) ?? "personaje";
+    const segments = parsedUrl.pathname
+      .split("/")
+      .filter(Boolean)
+      .reverse();
+    const candidate =
+      segments.find((segment) => /[a-z]/i.test(segment) && !/^\d+$/.test(segment)) ??
+      segments.at(0) ??
+      "personaje";
 
-    return lastSegment
+    return candidate
+      .replace(/^\d+[-_\s]*/, "")
       .split("-")
       .filter(Boolean)
       .map((part) => capitalize(part))
@@ -1958,13 +2037,14 @@ function mergeValue<T>(
   previousValue: T | undefined,
   fallbackValue: T,
   sectionStates: Partial<Record<ImportSectionKey, SectionState>>,
+  allowPreviousFallback = true,
 ) {
   if (actualValue !== undefined) {
     sectionStates[sectionKey] = "real";
     return actualValue;
   }
 
-  if (previousValue !== undefined) {
+  if (allowPreviousFallback && previousValue !== undefined) {
     sectionStates[sectionKey] = "mock";
     return previousValue;
   }
@@ -1982,13 +2062,14 @@ function mergeArray<T>(
   previousValue: T[] | undefined,
   fallbackValue: T[],
   sectionStates: Partial<Record<ImportSectionKey, SectionState>>,
+  allowPreviousFallback = true,
 ) {
   if (actualValue?.length) {
     sectionStates[sectionKey] = "real";
     return actualValue;
   }
 
-  if (previousValue?.length) {
+  if (allowPreviousFallback && previousValue?.length) {
     sectionStates[sectionKey] = "mock";
     return previousValue;
   }
@@ -2040,4 +2121,25 @@ function countSectionItems(key: ImportSectionKey, draft: ImportedCharacterDraft)
     default:
       return 0;
   }
+}
+
+function sanitizeCharacterName(value: string | undefined, sourceUrl: string) {
+  const cleaned = value
+    ? value.replace(/^\d+\s+/, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim()
+    : undefined;
+
+  if (!cleaned || cleaned.length < 2) {
+    return humanizeSlugFromUrl(sourceUrl);
+  }
+
+  return cleaned;
+}
+
+function hasRepeatedSpeedNoise(value: string | undefined) {
+  if (!value) {
+    return false;
+  }
+
+  const normalized = value.toLowerCase();
+  return /30\s+pies.+30\s+pies/i.test(normalized) || normalized.length > 24;
 }

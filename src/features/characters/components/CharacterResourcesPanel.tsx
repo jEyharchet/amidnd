@@ -14,22 +14,26 @@ export function CharacterResourcesPanel({
         <p>Preparado para evolucionar a acciones, consumibles y contadores del sistema.</p>
       </div>
 
-      <div className="table-list">
-        {character.resources.map((resource) => (
-          <div key={resource.id} className="table-list__row">
-            <div>
-              <strong>{resource.label}</strong>
-              <span>{resource.resetsOn ? `Recarga: ${resource.resetsOn}` : "Uso libre"}</span>
+      {character.resources.length ? (
+        <div className="table-list">
+          {character.resources.map((resource) => (
+            <div key={resource.id} className="table-list__row">
+              <div>
+                <strong>{resource.label}</strong>
+                <span>{resource.resetsOn ? `Recarga: ${resource.resetsOn}` : "Uso libre"}</span>
+              </div>
+              <div className="table-list__meta">
+                <strong>
+                  {resource.current}
+                  {resource.maximum !== undefined ? `/${resource.maximum}` : ""}
+                </strong>
+              </div>
             </div>
-            <div className="table-list__meta">
-              <strong>
-                {resource.current}
-                {resource.maximum !== undefined ? `/${resource.maximum}` : ""}
-              </strong>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p className="sheet-panel__note">No se detectaron recursos contables.</p>
+      )}
     </section>
   );
 }

@@ -12,15 +12,19 @@ export function CharacterNotesPanel({ character }: CharacterNotesPanelProps) {
         <p>Espacio de extension para campanas, escenas y referencias futuras.</p>
       </div>
 
-      <div className="notes-list">
-        {character.notes.map((note) => (
-          <article key={note.id} className="note-card">
-            <p className="note-card__kind">{note.kind ?? "other"}</p>
-            <h3>{note.title}</h3>
-            <p>{note.content}</p>
-          </article>
-        ))}
-      </div>
+      {character.notes.length ? (
+        <div className="notes-list">
+          {character.notes.map((note) => (
+            <article key={note.id} className="note-card">
+              <p className="note-card__kind">{note.kind ?? "other"}</p>
+              <h3>{note.title}</h3>
+              <p>{note.content}</p>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="sheet-panel__note">No hay notas del GM importadas o cargadas aun.</p>
+      )}
     </section>
   );
 }

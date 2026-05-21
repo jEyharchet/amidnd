@@ -20,7 +20,10 @@ export function CharacterCard({ character }: CharacterCardProps) {
           ) : null}
           <h2 className="character-card__name">{character.name}</h2>
         </div>
-        <CharacterStatusBadge sourceMetadata={character.sourceMetadata} />
+        <CharacterStatusBadge
+          sourceMetadata={character.sourceMetadata}
+          importDiagnostics={character.importDiagnostics}
+        />
       </div>
 
       <p className="character-card__summary">

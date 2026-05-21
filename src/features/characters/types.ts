@@ -106,7 +106,34 @@ export type CharacterSourceMetadata = {
   externalId?: string;
   importedAt?: string;
   visibility?: "private" | "shared" | "public" | "unknown";
-  syncStatus?: "manual" | "imported" | "stale" | "conflict";
+  syncStatus?: "manual" | "imported" | "stale" | "conflict" | "partial" | "mock";
+};
+
+export type CharacterImportState = "real" | "partial" | "mock";
+
+export type CharacterImportSectionStatus = "real" | "partial" | "mock" | "missing";
+
+export type CharacterImportSectionDiagnostic = {
+  key: string;
+  label: string;
+  status: CharacterImportSectionStatus;
+  importedCount: number;
+  expectedCount?: number;
+  importedFields: string[];
+  missingFields: string[];
+  notes?: string;
+};
+
+export type CharacterImportDiagnostics = {
+  state: CharacterImportState;
+  source: CharacterSource;
+  sectionsDetected: number;
+  importedFieldCount: number;
+  detectedSections: string[];
+  importedFields: string[];
+  missingFields: string[];
+  sectionDiagnostics: CharacterImportSectionDiagnostic[];
+  notes?: string[];
 };
 
 export type CharacterIdentity = {
@@ -194,6 +221,7 @@ export type CharacterSpell = {
   id: string;
   name: string;
   level: number;
+  description?: string;
   school?: string;
   castingTime?: string;
   range?: string;
@@ -245,10 +273,15 @@ export type CharacterProficiency = {
 
 export type CharacterBackgroundDetails = {
   name?: string;
+  age?: string;
+  alignment?: string;
+  personalityTraits?: string[];
   feature?: string;
   ideals?: string[];
   bonds?: string[];
   flaws?: string[];
+  languages?: string[];
+  history?: string;
   notes?: string;
 };
 
@@ -267,7 +300,12 @@ export type CharacterImportRawSnapshot = {
   sourceUrl?: string;
   title?: string;
   sections?: Record<string, string>;
+  detectedSections?: string[];
+  parsedFields?: string[];
+  missingFields?: string[];
   metadata?: Record<string, string>;
+  textSnapshot?: string;
+  htmlSnapshot?: string;
   payload?: unknown;
 };
 
@@ -304,6 +342,7 @@ export type ImportedCharacterDraft = {
   companions: CharacterCompanion[];
   notes: CharacterNote[];
   importIssues: CharacterImportIssue[];
+  importDiagnostics?: CharacterImportDiagnostics;
   rawImportData?: CharacterImportRawSnapshot;
 };
 
@@ -345,6 +384,7 @@ export type Character = {
   companions?: CharacterCompanion[];
   notes: CharacterNote[];
   sourceMetadata: CharacterSourceMetadata;
+  importDiagnostics?: CharacterImportDiagnostics;
   rawImportData?: CharacterImportRawSnapshot;
   importIssues?: CharacterImportIssue[];
   createdAt: string;

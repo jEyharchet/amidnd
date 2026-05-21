@@ -8,6 +8,8 @@ type CharacterSyncClientProps = {
   source: "LOCAL" | "NIVEL20";
   hasSyncableSource: boolean;
   sourceLabel: string;
+  importState?: "real" | "partial" | "mock";
+  missingFieldCount?: number;
   lastSyncedAt?: string | null;
   syncStatus: "NEVER_SYNCED" | "SYNCING" | "SYNCED" | "ERROR";
   syncError?: string | null;
@@ -25,6 +27,8 @@ export function CharacterSyncClient({
   source,
   hasSyncableSource,
   sourceLabel,
+  importState,
+  missingFieldCount,
   lastSyncedAt,
   syncStatus,
   syncError,
@@ -93,6 +97,10 @@ export function CharacterSyncClient({
             {lastSyncedAt ? formatDate(lastSyncedAt) : "Todavia no sincronizado"}
           </p>
           <p>Estado: {renderSyncStatus(syncStatus)}</p>
+          {importState ? <p>Calidad de importacion: {renderImportState(importState)}</p> : null}
+          {typeof missingFieldCount === "number" ? (
+            <p>Campos no detectados: {missingFieldCount}</p>
+          ) : null}
           {syncError ? <p>Error previo: {syncError}</p> : null}
         </div>
 
@@ -132,6 +140,18 @@ export function CharacterSyncClient({
       ) : null}
     </>
   );
+}
+
+function renderImportState(state: "real" | "partial" | "mock") {
+  switch (state) {
+    case "real":
+      return "Real";
+    case "mock":
+      return "Mock/Fallback";
+    case "partial":
+    default:
+      return "Parcial";
+  }
 }
 
 function delay(durationMs: number) {

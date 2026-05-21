@@ -12,20 +12,24 @@ export function CharacterSkillsPanel({ character }: CharacterSkillsPanelProps) {
         <p>La lista queda desacoplada para soportar reglas variantes o homebrew.</p>
       </div>
 
-      <div className="table-list">
-        {character.skills.map((skill) => (
-          <div key={skill.key} className="table-list__row">
-            <div>
-              <strong>{skill.label}</strong>
-              <span>{character.abilityScores[skill.ability].label}</span>
+      {character.skills.length ? (
+        <div className="table-list">
+          {character.skills.map((skill) => (
+            <div key={skill.key} className="table-list__row">
+              <div>
+                <strong>{skill.label}</strong>
+                <span>{character.abilityScores[skill.ability].label}</span>
+              </div>
+              <div className="table-list__meta">
+                <span>{skill.proficiency}</span>
+                <strong>{formatSignedValue(skill.modifier ?? 0)}</strong>
+              </div>
             </div>
-            <div className="table-list__meta">
-              <span>{skill.proficiency}</span>
-              <strong>{formatSignedValue(skill.modifier ?? 0)}</strong>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p className="sheet-panel__note">No se detectaron habilidades en la fuente actual.</p>
+      )}
     </section>
   );
 }

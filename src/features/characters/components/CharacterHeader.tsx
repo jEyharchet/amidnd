@@ -19,7 +19,10 @@ export function CharacterHeader({ character }: CharacterHeaderProps) {
       </div>
 
       <div className="sheet-header__meta">
-        <CharacterStatusBadge sourceMetadata={character.sourceMetadata} />
+        <CharacterStatusBadge
+          sourceMetadata={character.sourceMetadata}
+          importDiagnostics={character.importDiagnostics}
+        />
         {character.background ? <span>Trasfondo: {character.background}</span> : null}
         {character.alignment ? <span>Alineamiento: {character.alignment}</span> : null}
         <span>{character.rulesetId ?? "Ruleset libre"}</span>

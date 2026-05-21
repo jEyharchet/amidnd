@@ -6,17 +6,22 @@ import type {
 
 export type Nivel20ParsedSection = {
   key:
+    | "identity"
     | "ability-scores"
+    | "combat"
     | "skills"
     | "saving-throws"
     | "attacks"
+    | "proficiencies"
     | "traits"
     | "equipment"
     | "spells"
     | "quick-actions"
-    | "background";
+    | "background"
+    | "companions"
+    | "notes";
   label: string;
-  status: "detected" | "partial" | "missing";
+  status: "real" | "partial" | "mock" | "missing";
   itemCount: number;
   notes?: string;
 };

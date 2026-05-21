@@ -4,10 +4,11 @@ import {
   type Character as DbCharacter,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { analyzeNivel20Url } from "@/features/characters/importers/nivel20/nivel20Importer";
+import { importNivel20CharacterFromUrl } from "@/features/characters/importers/nivel20/nivel20Importer";
 import type {
   Character,
   CharacterAbilityScores,
+  CharacterImportDiagnostics,
   CharacterImportIssue,
   CharacterSource,
   ImportedCharacterDraft,
@@ -93,7 +94,13 @@ export async function syncCharacterFromSource(characterId: string) {
       },
     });
 
-    const importResult = analyzeNivel20Url(character.sourceUrl);
+    const previousDraft = (character.importedData as ImportedCharacterDraft | null) ?? null;
+    const importResult = await importNivel20CharacterFromUrl({
+      sourceUrl: character.sourceUrl,
+      fallbackName: character.name,
+      fallbackPlayerName: character.playerName,
+      previousDraft,
+    });
 
     if (!importResult.importedDraft) {
       const message =
@@ -129,19 +136,23 @@ export async function syncCharacterFromSource(characterId: string) {
         syncStatus:
           importResult.status === "failed"
             ? CharacterSyncStatus.ERROR
-            : CharacterSyncStatus.SYNCED,
+            : importResult.importedDraft?.importDiagnostics?.state === "real"
+              ? CharacterSyncStatus.SYNCED
+              : CharacterSyncStatus.ERROR,
         syncError:
           importResult.status === "failed"
             ? importResult.issues[0]?.message ?? "Error de sincronizacion."
-            : null,
+            : importResult.importedDraft?.importDiagnostics?.state === "real"
+              ? null
+              : importResult.issues[0]?.message ?? "Importacion parcial o mock/fallback.",
       },
     });
 
     return {
-      ok: true,
+      ok: importResult.importedDraft?.importDiagnostics?.state === "real",
       message:
         importResult.issues[0]?.message ??
-        "Sincronizacion mock completada con datos de preview.",
+        "Sincronizacion auditada. Revisa el diagnostico para ver que fue real y que quedo pendiente.",
     };
   } catch (error) {
     logServerError("characters.sync", error, { characterId });
@@ -172,9 +183,15 @@ export async function syncCharacterFromSource(characterId: string) {
 
 export function mapDbCharacterToDomainCharacter(record: DbCharacter): Character {
   const importedDraft = record.importedData as ImportedCharacterDraft | null;
-  const baseDraft = importedDraft ?? createLocalDraftFromRecord(record);
+  const baseDraft = normalizeImportedDraft(importedDraft ?? createLocalDraftFromRecord(record), record);
   const classLabel =
     baseDraft.classes.map((classEntry) => classEntry.name).join(" / ") || "Sin clase";
+  const displaySyncStatus =
+    baseDraft.importDiagnostics?.state === "mock"
+      ? "mock"
+      : baseDraft.importDiagnostics?.state === "partial"
+        ? "partial"
+        : mapPrismaSyncStatusToDomain(record.syncStatus);
 
   return {
     id: record.id,
@@ -230,9 +247,10 @@ export function mapDbCharacterToDomainCharacter(record: DbCharacter): Character 
       sourceUrl: record.sourceUrl ?? baseDraft.sourceMetadata.sourceUrl,
       externalId: record.sourceExternalId ?? baseDraft.sourceMetadata.externalId,
       importedAt: record.lastSyncedAt?.toISOString(),
-      syncStatus: mapPrismaSyncStatusToDomain(record.syncStatus),
+      syncStatus: displaySyncStatus,
       visibility: baseDraft.sourceMetadata.visibility,
     },
+    importDiagnostics: baseDraft.importDiagnostics,
     rawImportData: (record.rawImportData as ImportedCharacterDraft["rawImportData"]) ?? undefined,
     importIssues: mergeImportIssues(
       baseDraft.importIssues,
@@ -352,11 +370,165 @@ function mergeImportedDraftWithLocalName(
   };
 }
 
+function normalizeImportedDraft(
+  draft: ImportedCharacterDraft,
+  record: DbCharacter,
+): ImportedCharacterDraft {
+  if (draft.importDiagnostics) {
+    return draft;
+  }
+
+  const rawSnapshot = (record.rawImportData as ImportedCharacterDraft["rawImportData"]) ?? draft.rawImportData;
+  const isMockSnapshot = rawSnapshot?.metadata?.mocked === "true" || rawSnapshot?.metadata?.importState === "mock";
+  const source = mapPrismaSourceToDomain(record.source);
+
+  const inferredDiagnostics: CharacterImportDiagnostics = {
+    state: isMockSnapshot ? "mock" : record.source === DbCharacterSource.NIVEL20 ? "partial" : "real",
+    source,
+    sectionsDetected: countDetectedSections(draft),
+    importedFieldCount: countImportedFields(draft),
+    detectedSections: inferDetectedSections(draft),
+    importedFields: inferImportedFieldNames(draft),
+    missingFields: rawSnapshot?.missingFields ?? [],
+    sectionDiagnostics: buildSectionDiagnosticsFromDraft(draft, isMockSnapshot),
+    notes: isMockSnapshot
+      ? ["Esta ficha proviene de una importacion mock o fallback previa."]
+      : undefined,
+  };
+
+  return {
+    ...draft,
+    sourceMetadata: {
+      ...draft.sourceMetadata,
+      syncStatus: inferredDiagnostics.state === "mock" ? "mock" : inferredDiagnostics.state === "partial" ? "partial" : draft.sourceMetadata.syncStatus,
+    },
+    importDiagnostics: inferredDiagnostics,
+  };
+}
+
 function mergeImportIssues(
   issues: CharacterImportIssue[],
   extraIssues: CharacterImportIssue[],
 ) {
   return [...issues, ...extraIssues];
+}
+
+function countImportedFields(draft: ImportedCharacterDraft) {
+  return inferImportedFieldNames(draft).length;
+}
+
+function countDetectedSections(draft: ImportedCharacterDraft) {
+  return inferDetectedSections(draft).length;
+}
+
+function inferDetectedSections(draft: ImportedCharacterDraft) {
+  const sections: string[] = [];
+
+  if (draft.identity.name || draft.identity.species || draft.classes.length) {
+    sections.push("identity");
+  }
+  if (Object.values(draft.abilityScores).some((ability) => ability.score > 0)) {
+    sections.push("ability-scores");
+  }
+  if (draft.hitPoints.maximum || draft.armor.armorClass || draft.speed) {
+    sections.push("combat");
+  }
+  if (draft.savingThrows.length) {
+    sections.push("saving-throws");
+  }
+  if (draft.skills.length) {
+    sections.push("skills");
+  }
+  if (draft.proficiencies.length || draft.languages.length) {
+    sections.push("proficiencies");
+  }
+  if (draft.attacks.length) {
+    sections.push("attacks");
+  }
+  if (draft.background || draft.backgroundDetails || draft.alignment || draft.history) {
+    sections.push("background");
+  }
+  if (draft.racialTraits.length || draft.classTraits.length || draft.feats.length) {
+    sections.push("traits");
+  }
+  if (draft.equippedItems.length || draft.carriedItems.length || draft.otherPossessions.length) {
+    sections.push("equipment");
+  }
+  if (draft.spellcasting.length) {
+    sections.push("spells");
+  }
+  if (draft.quickActions.length || draft.resources.length) {
+    sections.push("quick-actions");
+  }
+  if (draft.companions.length) {
+    sections.push("companions");
+  }
+  if (draft.notes.length) {
+    sections.push("notes");
+  }
+
+  return sections;
+}
+
+function inferImportedFieldNames(draft: ImportedCharacterDraft) {
+  const fields: string[] = [];
+
+  if (draft.identity.name) fields.push("identity.name");
+  if (draft.identity.species) fields.push("identity.species");
+  if (draft.classes.length) fields.push("classes");
+  if (draft.totalLevel) fields.push("totalLevel");
+  if (draft.background) fields.push("background");
+  if (draft.alignment) fields.push("alignment");
+  if (draft.history) fields.push("history");
+  if (draft.languages.length) fields.push("languages");
+  if (draft.hitPoints.maximum) fields.push("hitPoints");
+  if (draft.armor.armorClass) fields.push("armor.armorClass");
+  if (draft.initiative) fields.push("initiative");
+  if (draft.speed && draft.speed !== "Pendiente") fields.push("speed");
+  if (draft.proficiencyBonus) fields.push("proficiencyBonus");
+
+  for (const [abilityKey, ability] of Object.entries(draft.abilityScores)) {
+    if (ability.score > 0) {
+      fields.push(`abilityScores.${abilityKey}`);
+    }
+  }
+
+  if (draft.savingThrows.length) fields.push("savingThrows");
+  if (draft.skills.length) fields.push("skills");
+  if (draft.proficiencies.length) fields.push("proficiencies");
+  if (draft.attacks.length) fields.push("attacks");
+  if (draft.spellcasting.length) fields.push("spellcasting");
+  if (draft.racialTraits.length) fields.push("racialTraits");
+  if (draft.classTraits.length) fields.push("classTraits");
+  if (draft.feats.length) fields.push("feats");
+  if (draft.equippedItems.length || draft.carriedItems.length || draft.otherPossessions.length) {
+    fields.push("equipment");
+  }
+  if (draft.quickActions.length || draft.resources.length) fields.push("quickActions");
+  if (draft.companions.length) fields.push("companions");
+  if (draft.notes.length) fields.push("notes");
+
+  return fields;
+}
+
+function buildSectionDiagnosticsFromDraft(
+  draft: ImportedCharacterDraft,
+  isMockSnapshot: boolean,
+): CharacterImportDiagnostics["sectionDiagnostics"] {
+  const status = isMockSnapshot ? "mock" : "partial";
+
+  return inferDetectedSections(draft).map((sectionKey) => ({
+    key: sectionKey,
+    label: sectionKey,
+    status,
+    importedCount: 1,
+    importedFields: [],
+    missingFields: [],
+    notes:
+      status === "mock"
+        ? "Datos heredados de una importacion mock/fallback previa."
+        : "Datos presentes, pero sin diagnostico fino guardado en esta version anterior.",
+  }));
 }
 
 function extractSourceExternalId(sourceUrl: string | null) {

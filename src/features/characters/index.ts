@@ -25,7 +25,9 @@ export type {
   CharacterFeat,
   CharacterHitPoints,
   CharacterImportIssue,
+  CharacterImportDiagnostics,
   CharacterImportRawSnapshot,
+  CharacterImportSectionDiagnostic,
   CharacterNote,
   CharacterProficiency,
   CharacterResource,
@@ -36,6 +38,8 @@ export type {
   CharacterSpellSlotLevel,
   CharacterSpellcasting,
   CharacterSpellcastingSummary,
+  CharacterImportState,
+  CharacterImportSectionStatus,
   CharacterTrait,
   ImportedCharacterDraft,
 } from "@/features/characters/types";

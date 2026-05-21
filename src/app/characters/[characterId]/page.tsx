@@ -49,6 +49,8 @@ export default async function CharacterDetailPage({
           source={record.source}
           hasSyncableSource={record.source === "NIVEL20" && Boolean(record.sourceUrl)}
           sourceLabel={record.sourceLabel ?? (record.source === "NIVEL20" ? "Nivel20" : "Local")}
+          importState={character.importDiagnostics?.state}
+          missingFieldCount={character.importDiagnostics?.missingFields.length}
           lastSyncedAt={record.lastSyncedAt?.toISOString() ?? null}
           syncStatus={record.syncStatus}
           syncError={record.syncError}

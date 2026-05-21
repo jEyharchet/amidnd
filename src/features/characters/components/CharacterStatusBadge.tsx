@@ -1,7 +1,11 @@
-import type { CharacterSourceMetadata } from "@/features/characters/types";
+import type {
+  CharacterImportDiagnostics,
+  CharacterSourceMetadata,
+} from "@/features/characters/types";
 
 type CharacterStatusBadgeProps = {
   sourceMetadata: CharacterSourceMetadata;
+  importDiagnostics?: CharacterImportDiagnostics;
 };
 
 const sourceLabels: Record<CharacterSourceMetadata["source"], string> = {
@@ -15,9 +19,14 @@ const sourceLabels: Record<CharacterSourceMetadata["source"], string> = {
 
 export function CharacterStatusBadge({
   sourceMetadata,
+  importDiagnostics,
 }: CharacterStatusBadgeProps) {
   const syncLabel =
-    sourceMetadata.syncStatus === "imported"
+    importDiagnostics?.state === "mock" || sourceMetadata.syncStatus === "mock"
+      ? "Mock/Fallback"
+      : importDiagnostics?.state === "partial" || sourceMetadata.syncStatus === "partial"
+        ? "Parcial"
+        : sourceMetadata.syncStatus === "imported"
       ? "Importado"
       : sourceMetadata.syncStatus === "stale"
         ? "Pendiente"
